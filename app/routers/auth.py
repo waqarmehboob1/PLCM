@@ -5,6 +5,7 @@ Handles user login, logout, password changes, and role management
 
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, status, Header
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 from app.database import get_session
 from app.models.tables import User, Role, Permission
@@ -16,25 +17,25 @@ from app.auth import (
     get_user_from_token,
     get_user_permissions,
     check_role,
-    extract_token_from_header,
     check_permission
 )
 from datetime import timedelta
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
-
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+oauth2_scheme:OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # ==================== DEPENDENCY FUNCTIONS ====================
 
-def get_current_user(authorization: str = Header(None), session: Session = Depends(get_session)):
+def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> User:
     """Dependency to get current authenticated user from token."""
-    if not authorization:
+    print("TOKEN RECEIVED:", token)
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing authorization header",
         )
     
-    token = extract_token_from_header(authorization)
+    # token = extract_token_from_header(authorization)
     user = get_user_from_token(token, session)
     
     if not user.is_active:
@@ -42,7 +43,6 @@ def get_current_user(authorization: str = Header(None), session: Session = Depen
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is inactive",
         )
-    
     return user
 
 def require_permission(permission: str):
@@ -70,12 +70,11 @@ def require_role(role: str):
 # ==================== AUTHENTICATION ENDPOINTS ====================
 
 @router.post("/login", response_model=schemas.TokenResponse)
-def login(login_data: schemas.LoginRequest, session: Session = Depends(get_session)):
-
+def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
     """Login endpoint. Returns JWT token with user info and permissions."""
-    user = session.exec(select(User).where(User.username == login_data.username)).first()
-    
-    if not user or not verify_password(login_data.password, user.password or ""):
+    user = session.exec(select(User).where(User.username == form_data.username)).first()
+    print("USER FOUND:", user)
+    if not user or not verify_password(form_data.password, user.password or ""):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
@@ -93,7 +92,7 @@ def login(login_data: schemas.LoginRequest, session: Session = Depends(get_sessi
     """Create JWT access Token"""
 
     token_data = {
-        "sub": user.id,
+        "sub": str(user.id),
         "username": user.username,
         "roles": role_names,
         "permissions": permissions
@@ -109,7 +108,6 @@ def login(login_data: schemas.LoginRequest, session: Session = Depends(get_sessi
         roles=role_names,
         permissions=permissions
     )
-
 
 @router.post("/register", response_model=schemas.UserReadWithRoles)
 def register(user_data: schemas.UserCreate, session: Session = Depends(get_session)
@@ -139,6 +137,7 @@ def register(user_data: schemas.UserCreate, session: Session = Depends(get_sessi
         is_active=True,
         password=hashed_password
     )
+    print("REGISTERING USER:", db_user)
     db_user.roles = [default_role]
     
     session.add(db_user)
@@ -146,7 +145,6 @@ def register(user_data: schemas.UserCreate, session: Session = Depends(get_sessi
     session.refresh(db_user)
     
     return db_user
-
 
 @router.post("/change-password")
 def change_password(
@@ -175,7 +173,6 @@ def list_roles(user: User = Depends(require_role("Admin")), session: Session = D
     roles = session.exec(select(Role)).all()
     return roles
 
-
 @router.get("/roles/{role_id}", response_model=schemas.RoleRead)
 def get_role(role_id: int, user: User = Depends(require_role("Admin")), session: Session = Depends(get_session)): 
     """Get a specific role. Requires Admin role."""
@@ -183,7 +180,6 @@ def get_role(role_id: int, user: User = Depends(require_role("Admin")), session:
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     return role
-
 
 @router.post("/roles", response_model=schemas.RoleRead)
 def create_role(role_data: schemas.RoleCreate, user: User = Depends(require_role("Admin")), session: Session = Depends(get_session)):
@@ -202,7 +198,6 @@ def create_role(role_data: schemas.RoleCreate, user: User = Depends(require_role
     session.refresh(role)
     
     return role
-
 
 @router.put("/roles/{role_id}", response_model=schemas.RoleRead)
 def update_role(
@@ -226,7 +221,6 @@ def update_role(
     return role
 
 # ==================== ROLE ASSIGNMENT ====================
-
 @router.post("/assign-role")
 def assign_role_to_user(
     assignment: schemas.AssignRoleRequest,
@@ -252,7 +246,6 @@ def assign_role_to_user(
         "user_id": target_user.id,
         "role_id": role.id
     }
-
 
 @router.delete("/remove-role")
 def remove_role_from_user(
@@ -280,9 +273,7 @@ def remove_role_from_user(
         "role_id": role.id
     }
 
-
 # ==================== CURRENT USER INFO ====================
-
 @router.get("/me", response_model=schemas.UserReadWithRoles)
 def get_current_user_info(
     user: User = Depends(get_current_user),
@@ -292,11 +283,10 @@ def get_current_user_info(
     session.refresh(user)
     return user
 
-
 @router.get("/permissions", response_model=List[str])
 def get_current_user_permissions(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """Get all permissions for the current user."""
-    return get_user_permissions(user, session)
+    return get_user_permissions(user)

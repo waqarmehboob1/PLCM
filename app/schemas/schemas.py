@@ -85,6 +85,7 @@ class OrderRead(OrderBase):
     id: int
     status_id: Optional[int] = None
     customer_id: int
+    status_name: Optional[str] = None
     projects: Optional[List["ProjectRead"]] = None
 
     class Config:
@@ -103,6 +104,8 @@ class ProjectRead(ProjectBase):
     id: int
     order_id: Optional[int] = None
     status_id: Optional[int] = None
+    status_name: Optional[str] = None
+    owner_id: Optional[int] = None
     systems: Optional[List["SystemRead"]] = None
     class Config:
         orm_mode = True
@@ -124,6 +127,7 @@ class SystemRead(SystemBase):
     id: int
     project_id: int
     status_id: Optional[int] = None
+    status_name: Optional[str] = None
     subsystems: Optional[List["SubsystemRead"]] = None
 
     class Config:
@@ -142,6 +146,7 @@ class SubsystemRead(SubsystemBase):
     id: int
     system_id: int
     status_id: Optional[int] = None
+    status_name: Optional[str] = None
     modules: Optional[List["ModuleRead"]] = None
 
     class Config:
@@ -160,6 +165,7 @@ class ModuleRead(ModuleBase):
     id: int
     subsystem_id: int
     status_id: Optional[int] = None
+    status_name: Optional[str] = None
     units: Optional[List["UnitRead"]] = None
 
     class Config:
@@ -178,6 +184,7 @@ class UnitRead(UnitBase):
     id: int
     module_id: Optional[int] = None
     status_id: Optional[int] = None
+    status_name: Optional[str] = None
     components: Optional[List["ComponentRead"]] = None
 
     class Config:
@@ -196,6 +203,7 @@ class ComponentRead(ComponentBase):
     id: int
     unit_id: Optional[int] = None
     status_id: Optional[int] = None
+    status_name: Optional[str] = None
     inventory_items: Optional[List["InventoryRead"]] = None
 
     class Config:
@@ -225,6 +233,7 @@ class InventoryUpdate(SQLModel):
 
 # ---- Entity / History / Maintenance ----
 class EntityCreate(EntityBase):
+    status_id: Optional[int] = None
     pass
 
 class EntityRead(EntityBase):
@@ -246,11 +255,6 @@ class EntityStatusHistoryCreate(EntityStatusHistoryBase):
 
 class EntityStatusHistoryRead(EntityStatusHistoryBase):
     id: int
-    entity_id: Optional[int] = None
-    status_id: Optional[int] = None
-    changed_by: Optional[int] = None
-    changed_by_user: Optional[UserRead] = None
-
     class Config:
         orm_mode = True
 

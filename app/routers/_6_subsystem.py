@@ -10,34 +10,58 @@ router = APIRouter()
 # ===================== SUBSYSTEM ENDPOINTS =====================
 @router.post("/subsystems/", response_model=schemas.SubsystemRead, tags=["subsystems"])
 def create_subsystem(subsystem: schemas.SubsystemCreate, session: Session = Depends(get_session)):
-    db_subsystem = Subsystem(**subsystem.dict())
+    db_subsystem = Subsystem(**subsystem.model_dump())
     session.add(db_subsystem)
     session.commit()
     session.refresh(db_subsystem)
-    return db_subsystem
+    status_name = db_subsystem.status.name if db_subsystem.status else None
+    return schemas.SubsystemRead(
+        **db_subsystem.model_dump(),
+        status_name=status_name,
+        modules=db_subsystem.modules
+    )
 
 @router.get("/subsystems/", response_model=List[schemas.SubsystemRead], tags=["subsystems"])
 def list_subsystems(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
-    return session.exec(select(Subsystem).offset(skip).limit(limit)).all()
+    subsystems = session.exec(select(Subsystem).offset(skip).limit(limit)).all()
+    result = []
+    for subsystem in subsystems:
+        status_name = subsystem.status.name if subsystem.status else None
+        result.append(schemas.SubsystemRead(
+            **subsystem.model_dump(),
+            status_name=status_name,
+            modules=subsystem.modules
+        ))
+    return result
 
 @router.get("/subsystems/{subsystem_id}/", response_model=schemas.SubsystemRead, tags=["subsystems"])
 def get_subsystem(subsystem_id: int, session: Session = Depends(get_session)):
     subsystem = session.get(Subsystem, subsystem_id)
     if not subsystem:
         raise HTTPException(status_code=404, detail="Subsystem not found")
-    return subsystem
+    status_name = subsystem.status.name if subsystem.status else None
+    return schemas.SubsystemRead(
+        **subsystem.model_dump(),
+        status_name=status_name,
+        modules=subsystem.modules
+    )
 
 @router.put("/subsystems/{subsystem_id}/", response_model=schemas.SubsystemRead, tags=["subsystems"])
 def update_subsystem(subsystem_id: int, subsystem: schemas.SubsystemUpdate, session: Session = Depends(get_session)):
     db_subsystem = session.get(Subsystem, subsystem_id)
     if not db_subsystem:
         raise HTTPException(status_code=404, detail="Subsystem not found")
-    for k, v in subsystem.dict(exclude_unset=True).items():
+    for k, v in subsystem.model_dump(exclude_unset=True).items():
         setattr(db_subsystem, k, v)
     session.add(db_subsystem)
     session.commit()
     session.refresh(db_subsystem)
-    return db_subsystem
+    status_name = db_subsystem.status.name if db_subsystem.status else None
+    return schemas.SubsystemRead(
+        **db_subsystem.model_dump(),
+        status_name=status_name,
+        modules=db_subsystem.modules
+    )
 
 @router.delete("/subsystems/{subsystem_id}/", tags=["subsystems"])
 def delete_subsystem(subsystem_id: int, session: Session = Depends(get_session)):

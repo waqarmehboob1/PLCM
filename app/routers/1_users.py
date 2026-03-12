@@ -9,7 +9,7 @@ router = APIRouter()
 # ===================== USER ENDPOINTS =====================
 @router.post("/users/", response_model=schemas.UserRead, tags=["users"])
 def create_user(user: schemas.UserCreate, session: Session = Depends(get_session)):
-    db_user = User(**user.dict())
+    db_user = User(**user.model_dump())
     session.add(db_user)
     session.commit()
     session.refresh(db_user)

@@ -10,7 +10,7 @@ router = APIRouter()
 # ===================== MAINTENANCE LOG ENDPOINTS =====================
 @router.post("/maintenance-logs/", response_model=schemas.MaintenanceLogRead, tags=["maintenance"])
 def create_maintenance_log(log: schemas.MaintenanceLogCreate, session: Session = Depends(get_session)):
-    db_log = MaintenanceLog(**log.dict())
+    db_log = MaintenanceLog(**log.model_dump())
     session.add(db_log)
     session.commit()
     session.refresh(db_log)
@@ -32,7 +32,7 @@ def update_maintenance_log(log_id: int, log: schemas.MaintenanceLogUpdate, sessi
     db_log = session.get(MaintenanceLog, log_id)
     if not db_log:
         raise HTTPException(status_code=404, detail="Maintenance log not found")
-    for k, v in log.dict(exclude_unset=True).items():
+    for k, v in log.model_dump(exclude_unset=True).items():
         setattr(db_log, k, v)
     session.add(db_log)
     session.commit()

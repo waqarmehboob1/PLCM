@@ -9,7 +9,7 @@ router = APIRouter()
 # ===================== USER ENDPOINTS =====================
 @router.post("/users/", response_model=schemas.UserRead, tags=["users"])
 def create_user(user: schemas.UserCreate, session: Session = Depends(get_session)):
-    db_user = User(**user.dict())
+    db_user = User(**user.model_dump())
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
@@ -31,7 +31,7 @@ def update_user(user_id: int, user: schemas.UserUpdate, session: Session = Depen
     db_user = session.get(User, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    for k, v in user.dict(exclude_unset=True).items():
+    for k, v in user.model_dump(exclude_unset=True).items():
         setattr(db_user, k, v)
     session.add(db_user)
     session.commit()

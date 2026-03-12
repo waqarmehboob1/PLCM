@@ -28,7 +28,7 @@ alembic.ini
 
 Edit alembic.ini:
 
-    - sqlalchemy.url = postgresql://user:password@localhost/dbname
+    sqlalchemy.url = postgresql://user:password@localhost/dbname
 
 Then open alembic/env.py
 
@@ -40,7 +40,7 @@ Then open alembic/env.py
 
 🚀 Now Generate Migration Automatically
 
-    -alembic revision --autogenerate -m "Added hashed_password column"
+    alembic revision --autogenerate -m "Added hashed_password column"
 
 Alembic will detect:
 
@@ -49,6 +49,6 @@ Alembic will detect:
     .Table changes
 
 Then apply migration:
-    -alembic upgrade head
+    alembic upgrade head
 
 Database is now updated safely.

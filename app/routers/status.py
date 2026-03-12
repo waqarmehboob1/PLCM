@@ -10,7 +10,7 @@ router = APIRouter()
 # ===================== STATUS ENDPOINTS =====================
 @router.post("/statuses/", response_model=schemas.StatusRead, tags=["statuses"])
 def create_status(status: schemas.StatusCreate, session: Session = Depends(get_session)):
-    db_status = Status(**status.dict())
+    db_status = Status(**status.model_dump())
     session.add(db_status)
     session.commit()
     session.refresh(db_status)
@@ -32,7 +32,7 @@ def update_status(status_id: int, status: schemas.StatusUpdate, session: Session
     db_status = session.get(Status, status_id)
     if not db_status:
         raise HTTPException(status_code=404, detail="Status not found")
-    for k, v in status.dict(exclude_unset=True).items():
+    for k, v in status.model_dump(exclude_unset=True).items():
         setattr(db_status, k, v)
     session.add(db_status)
     session.commit()

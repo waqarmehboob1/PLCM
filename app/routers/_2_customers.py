@@ -10,7 +10,7 @@ router = APIRouter()
 # ===================== CUSTOMER ENDPOINTS =====================
 @router.post("/customers/", response_model=schemas.CustomerRead, tags=["customers"])
 def create_customer(customer: schemas.CustomerCreate, session: Session = Depends(get_session)):
-    db_customer = Customer(**customer.dict())
+    db_customer = Customer(**customer.model_dump())
     session.add(db_customer)
     session.commit()
     session.refresh(db_customer)
@@ -32,7 +32,7 @@ def update_customer(customer_id: int, customer: schemas.CustomerUpdate, session:
     db_customer = session.get(Customer, customer_id)
     if not db_customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    for k, v in customer.dict(exclude_unset=True).items():
+    for k, v in customer.model_dump(exclude_unset=True).items():
         setattr(db_customer, k, v)
     session.add(db_customer)
     session.commit()

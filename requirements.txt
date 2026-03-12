@@ -9,3 +9,4 @@ pyjwt
 psycopg2-binary
 python-dotenv
 alembic
+pwdlib[argon2]

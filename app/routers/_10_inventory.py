@@ -12,7 +12,7 @@ router = APIRouter()
 # ===================== INVENTORY ENDPOINTS =====================
 @router.post("/inventory/", response_model=schemas.InventoryRead, tags=["inventory"])
 def create_inventory(inventory: schemas.InventoryCreate, session: Session = Depends(get_session)):
-    db_inventory = Inventory(**inventory.dict())
+    db_inventory = Inventory(**inventory.model_dump())
     session.add(db_inventory)
     session.commit()
     session.refresh(db_inventory)
@@ -34,7 +34,7 @@ def update_inventory(inventory_id: int, inventory: schemas.InventoryUpdate, sess
     db_inventory = session.get(Inventory, inventory_id)
     if not db_inventory:
         raise HTTPException(status_code=404, detail="Inventory not found")
-    for k, v in inventory.dict(exclude_unset=True).items():
+    for k, v in inventory.model_dump(exclude_unset=True).items():
         setattr(db_inventory, k, v)
     session.add(db_inventory)
     session.commit()

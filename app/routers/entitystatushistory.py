@@ -10,7 +10,7 @@ router = APIRouter()
 # ===================== ENTITY STATUS HISTORY ENDPOINTS =====================
 @router.post("/entity-status-history/", response_model=schemas.EntityStatusHistoryRead, tags=["status-history"])
 def create_status_history(history: schemas.EntityStatusHistoryCreate, session: Session = Depends(get_session)):
-    db_history = EntityStatusHistory(**history.dict())
+    db_history = EntityStatusHistory(**history.model_dump())
     session.add(db_history)
     session.commit()
     session.refresh(db_history)
@@ -32,7 +32,7 @@ def update_status_history(history_id: int, history: schemas.EntityStatusHistoryU
     db_history = session.get(EntityStatusHistory, history_id)
     if not db_history:
         raise HTTPException(status_code=404, detail="Status history not found")
-    for k, v in history.dict(exclude_unset=True).items():
+    for k, v in history.model_dump(exclude_unset=True).items():
         setattr(db_history, k, v)
     session.add(db_history)
     session.commit()
