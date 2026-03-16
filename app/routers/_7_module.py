@@ -4,6 +4,11 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models.tables import (Module)
 from app.schemas import schemas
+from app.services.create_entity import New_entity
+from app.services.create_entitystatusHistory import create_status_history
+from app.services.update_entity import update_entity_status
+from app.config.entities import ENTITY_CONFIG
+entity_config = ENTITY_CONFIG.get("module")
 
 router = APIRouter()
 
@@ -12,6 +17,14 @@ router = APIRouter()
 def create_module(module: schemas.ModuleCreate, session: Session = Depends(get_session)):
     db_module = Module(**module.model_dump())
     session.add(db_module)
+    session.flush()
+
+# Create
+#    1.  Entity status
+#    2.  Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    New_entity(session=session, entity=db_module, entity_name = ENTITY_CONFIG["display_name"])
+# --------------------------------------------------------------------------------------------------------------------------------------------
     session.commit()
     session.refresh(db_module)
     status_name = db_module.status.name if db_module.status else None
@@ -54,6 +67,12 @@ def update_module(module_id: int, module: schemas.ModuleUpdate, session: Session
     for k, v in module.model_dump(exclude_unset=True).items():
         setattr(db_module, k, v)
     session.add(db_module)
+    session.flush()
+
+# Update Entity status and Create Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    update_entity_status(session=session, entity= db_module, entity_name = "order")
+
     session.commit()
     session.refresh(db_module)
     status_name = db_module.status.name if db_module.status else None

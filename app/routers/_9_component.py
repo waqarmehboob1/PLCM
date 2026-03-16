@@ -4,6 +4,11 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models.tables import (Component)
 from app.schemas import schemas
+from app.services.create_entity import New_entity
+from app.services.create_entitystatusHistory import create_status_history
+from app.services.update_entity import update_entity_status
+from app.config.entities import ENTITY_CONFIG
+entity_config = ENTITY_CONFIG.get("component    ")
 
 router = APIRouter()
 
@@ -12,6 +17,15 @@ router = APIRouter()
 def create_component(component: schemas.ComponentCreate, session: Session = Depends(get_session)):
     db_component = Component(**component.model_dump())
     session.add(db_component)
+    session.flush()
+
+# Create
+#    1.  Entity status
+#    2.  Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    New_entity(session=session, entity=db_component, entity_name = ENTITY_CONFIG["display_name"])
+# --------------------------------------------------------------------------------------------------------------------------------------------
+
     session.commit()
     session.refresh(db_component)
     status_name = db_component.status.name if db_component.status else None
@@ -54,6 +68,12 @@ def update_component(component_id: int, component: schemas.ComponentUpdate, sess
     for k, v in component.model_dump(exclude_unset=True).items():
         setattr(db_component, k, v)
     session.add(db_component)
+    session.flush()
+
+# Update Entity status and Create Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    update_entity_status(session=session, entity= db_component, entity_name = "order")
+
     session.commit()
     session.refresh(db_component)
     status_name = db_component.status.name if db_component.status else None

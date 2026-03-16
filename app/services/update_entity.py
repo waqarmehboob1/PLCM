@@ -4,29 +4,35 @@
 from app.models.tables import (Entity)
 from sqlmodel import Session, select
 from typing import Optional
+from fastapi import HTTPException
+from app.services.create_entitystatusHistory import create_status_history
+from app.schemas import schemas
 
 
-def update_entity_status(
-    session: Session,
-    entity_type: Optional[str],
-    entity_pk: Optional[int],
-    new_status_id: Optional[int]
-):
 
-    entity = session.exec(
+def update_entity_status(session: Session, entity:any, entity_name: Optional[str]):
+
+    updated_entity = session.exec(
         select(Entity).where(
-            Entity.entity_type == entity_type,
-            Entity.entity_pk == entity_pk
+            Entity.entity_type == entity_name,
+            Entity.entity_pk == entity.id
         )
     ).first()
-
     if not entity:
+        raise HTTPException(status_code=404, detail = "Entity Record not found")
         return None
 
-    entity.status_id = new_status_id
+    updated_entity.status_id = entity.status_id
 
-    session.add(entity)
+    session.add(updated_entity)
     session.flush()
-    session.refresh(entity)
 
-    return entity
+    create_status_history(
+        session=session,
+        history_data=schemas.EntityStatusHistoryCreate(
+            entity_id=updated_entity.id,
+            status_id=updated_entity.status_id,
+            changed_by=5
+        )
+    )
+    return updated_entity

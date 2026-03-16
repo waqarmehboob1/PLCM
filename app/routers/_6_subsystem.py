@@ -4,6 +4,11 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models.tables import (Subsystem)
 from app.schemas import schemas
+from app.services.create_entity import New_entity
+from app.services.create_entitystatusHistory import create_status_history
+from app.services.update_entity import update_entity_status
+from app.config.entities import ENTITY_CONFIG
+entity_config = ENTITY_CONFIG.get("subsystem")
 
 router = APIRouter()
 
@@ -12,6 +17,15 @@ router = APIRouter()
 def create_subsystem(subsystem: schemas.SubsystemCreate, session: Session = Depends(get_session)):
     db_subsystem = Subsystem(**subsystem.model_dump())
     session.add(db_subsystem)
+    session.flush()
+
+# Create
+#    1.  Entity status
+#    2.  Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    New_entity(session=session, entity=db_subsystem, entity_name = ENTITY_CONFIG["display_name"])
+# --------------------------------------------------------------------------------------------------------------------------------------------
+
     session.commit()
     session.refresh(db_subsystem)
     status_name = db_subsystem.status.name if db_subsystem.status else None
@@ -54,6 +68,12 @@ def update_subsystem(subsystem_id: int, subsystem: schemas.SubsystemUpdate, sess
     for k, v in subsystem.model_dump(exclude_unset=True).items():
         setattr(db_subsystem, k, v)
     session.add(db_subsystem)
+    session.flush()
+
+# Update Entity status and Create Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    update_entity_status(session=session, entity= db_subsystem, entity_name = "order")
+
     session.commit()
     session.refresh(db_subsystem)
     status_name = db_subsystem.status.name if db_subsystem.status else None

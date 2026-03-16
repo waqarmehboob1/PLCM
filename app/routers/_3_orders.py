@@ -6,39 +6,29 @@ from app.models.tables import (Order)
 from app.schemas import schemas
 from app.services.create_entity import New_entity
 from app.services.create_entitystatusHistory import create_status_history
-router = APIRouter()
+from app.services.update_entity import update_entity_status
+from app.config.entities import ENTITY_CONFIG
+entity_config = ENTITY_CONFIG.get("order")
 
+
+router = APIRouter()
 # ===================== ORDER ENDPOINTS =====================
+
 @router.post("/orders/", response_model=schemas.OrderRead, tags=["orders"])
 def create_order(order: schemas.OrderCreate, session: Session = Depends(get_session)):
     db_order = Order(**order.model_dump())
     session.add(db_order)
     session.flush()
 
-    entity = New_entity(
-            session=session,
-            entity_data=schemas.EntityCreate(
-                name=f"Order-{db_order.id}",
-                display_name=f"Order-{db_order.id}",
-                entity_type="order",
-                entity_pk=db_order.id,
-                status_id=db_order.status_id
-            ))
-
-    create_status_history(
-        session=session,
-        history_data=schemas.EntityStatusHistoryCreate(
-            entity_id=entity.id,
-            status_id=entity.status_id,
-            changed_by=5
-        )
-    )
+# Create
+#    1.  Entity status
+#    2.  Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    New_entity(session=session, entity=db_order, entity_name = ENTITY_CONFIG["display_name"])
+# --------------------------------------------------------------------------------------------------------------------------------------------
     session.commit()
     session.refresh(db_order)
     # Attach status_name for response
-
-
-    
     status_name = db_order.status.name if db_order.status else None
 
     return schemas.OrderRead(
@@ -80,6 +70,12 @@ def update_order(order_id: int, order: schemas.OrderUpdate, session: Session = D
     for k, v in order.model_dump(exclude_unset=True).items():
         setattr(db_order, k, v)
     session.add(db_order)
+    session.flush()
+
+# Update Entity status and Create Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    update_entity_status(session=session, entity= db_order, entity_name = "order")
+# --------------------------------------------------------------------------------------------------------------------------------------------
     session.commit()
     session.refresh(db_order)
     status_name = db_order.status.name if db_order.status else None

@@ -4,14 +4,28 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models.tables import (Project)
 from app.schemas import schemas
+from app.services.create_entity import New_entity
+from app.services.create_entitystatusHistory import create_status_history
+from app.services.update_entity import update_entity_status
+from app.config.entities import ENTITY_CONFIG
+entity_config = ENTITY_CONFIG.get("project")
 
 router = APIRouter()
 
 # ===================== PROJECT ENDPOINTS =====================
 @router.post("/projects/", response_model=schemas.ProjectRead, tags=["projects"])
 def create_project(project: schemas.ProjectCreate, session: Session = Depends(get_session)):
-    db_project = Project(**project.dict())
+    db_project = Project(**project.model_dump())
     session.add(db_project)
+    session.flush()
+
+# Create
+#    1.  Entity status
+#    2.  Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    New_entity(session=session, entity=db_project, entity_name = ENTITY_CONFIG["display_name"])
+# --------------------------------------------------------------------------------------------------------------------------------------------
+
     session.commit()
     session.refresh(db_project)
     status_name = db_project.status.name if db_project.status else None
@@ -54,6 +68,11 @@ def update_project(project_id: int, project: schemas.ProjectUpdate, session: Ses
     for k, v in project.model_dump(exclude_unset=True).items():
         setattr(db_project, k, v)
     session.add(db_project)
+    session.flush()
+
+# Update Entity status and Create Entity Status History
+# --------------------------------------------------------------------------------------------------------------------------------------------
+    update_entity_status(session=session, entity= db_project, entity_name = "order")
     session.commit()
     session.refresh(db_project)
     status_name = db_project.status.name if db_project.status else None
