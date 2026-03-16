@@ -23,7 +23,7 @@ def create_unit(unit: schemas.UnitCreate, session: Session = Depends(get_session
 #    1.  Entity status
 #    2.  Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    New_entity(session=session, entity=db_unit, entity_name = ENTITY_CONFIG["display_name"])
+    New_entity(session=session, entity=db_unit, entity_name = entity_config["display_name"])
 # --------------------------------------------------------------------------------------------------------------------------------------------
 
     session.commit()
@@ -72,7 +72,7 @@ def update_unit(unit_id: int, unit: schemas.UnitUpdate, session: Session = Depen
 
 # Update Entity status and Create Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    update_entity_status(session=session, entity= db_unit, entity_name = "order")
+    update_entity_status(session=session, entity= db_unit, entity_name = entity_config["display_name"])
 
     session.commit()
     session.refresh(db_unit)

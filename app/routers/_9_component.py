@@ -23,7 +23,7 @@ def create_component(component: schemas.ComponentCreate, session: Session = Depe
 #    1.  Entity status
 #    2.  Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    New_entity(session=session, entity=db_component, entity_name = ENTITY_CONFIG["display_name"])
+    New_entity(session=session, entity=db_component, entity_name = entity_config["display_name"])
 # --------------------------------------------------------------------------------------------------------------------------------------------
 
     session.commit()
@@ -72,7 +72,7 @@ def update_component(component_id: int, component: schemas.ComponentUpdate, sess
 
 # Update Entity status and Create Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    update_entity_status(session=session, entity= db_component, entity_name = "order")
+    update_entity_status(session=session, entity= db_component, entity_name = entity_config["display_name"])
 
     session.commit()
     session.refresh(db_component)

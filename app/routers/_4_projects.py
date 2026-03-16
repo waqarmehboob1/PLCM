@@ -23,7 +23,7 @@ def create_project(project: schemas.ProjectCreate, session: Session = Depends(ge
 #    1.  Entity status
 #    2.  Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    New_entity(session=session, entity=db_project, entity_name = ENTITY_CONFIG["display_name"])
+    New_entity(session=session, entity=db_project, entity_name = entity_config["display_name"])
 # --------------------------------------------------------------------------------------------------------------------------------------------
 
     session.commit()
@@ -72,7 +72,7 @@ def update_project(project_id: int, project: schemas.ProjectUpdate, session: Ses
 
 # Update Entity status and Create Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    update_entity_status(session=session, entity= db_project, entity_name = "order")
+    update_entity_status(session=session, entity= db_project, entity_name = entity_config["display_name"])
     session.commit()
     session.refresh(db_project)
     status_name = db_project.status.name if db_project.status else None

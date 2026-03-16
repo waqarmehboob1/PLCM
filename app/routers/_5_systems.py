@@ -23,7 +23,7 @@ def create_system(system: schemas.SystemCreate, session: Session = Depends(get_s
 #    1.  Entity status
 #    2.  Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    New_entity(session=session, entity=db_system, entity_name = ENTITY_CONFIG["display_name"])
+    New_entity(session=session, entity=db_system, entity_name = entity_config["display_name"])
 # --------------------------------------------------------------------------------------------------------------------------------------------
 
     session.commit()
@@ -72,7 +72,7 @@ def update_system(system_id: int, system: schemas.SystemUpdate, session: Session
 
 # Update Entity status and Create Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    update_entity_status(session=session, entity= db_system, entity_name = "order")
+    update_entity_status(session=session, entity= db_system, entity_name = entity_config["display_name"])
 
     session.commit()
     session.refresh(db_system)
