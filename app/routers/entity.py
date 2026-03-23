@@ -2,15 +2,16 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from app.database import get_session
-from app.models.tables import (Entity)
+from app.models.tables import (Entity, User)
 from app.schemas import schemas
+from app.routers.auth import require_permission
 
 router = APIRouter()
 
 # ===================== ENTITY ENDPOINTS =====================
 # Create New Entity 
 @router.post("/entities/", response_model=schemas.EntityRead, tags=["entities"])
-def create_entity(entity: schemas.EntityCreate, session: Session = Depends(get_session)):
+def create_entity(entity: schemas.EntityCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_entities"))):
     db_entity = Entity(**entity.model_dump())
     session.add(db_entity)
     session.commit()
@@ -19,12 +20,12 @@ def create_entity(entity: schemas.EntityCreate, session: Session = Depends(get_s
 
 # List All Entities with Pagination and Optional Filtering 
 @router.get("/entities/", response_model=List[schemas.EntityRead], tags=["entities"])
-def list_entities(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
+def list_entities(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_entities"))):
     return session.exec(select(Entity).offset(skip).limit(limit)).all()
 
 # Get Single Entity by ID
 @router.get("/entities/{entity_id}/", response_model=schemas.EntityRead, tags=["entities"])
-def get_entity(entity_id: int, session: Session = Depends(get_session)):
+def get_entity(entity_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_entities"))):
     entity = session.get(Entity, entity_id)
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")
@@ -32,7 +33,7 @@ def get_entity(entity_id: int, session: Session = Depends(get_session)):
 
 # Update Existing Entity (Partial Update)
 @router.put("/entities/{entity_id}/", response_model=schemas.EntityRead, tags=["entities"])
-def update_entity(entity_id: int, entity: schemas.EntityUpdate, session: Session = Depends(get_session)):
+def update_entity(entity_id: int, entity: schemas.EntityUpdate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("edit_entities"))):
     db_entity = session.get(Entity, entity_id)
     
     if not db_entity:
@@ -47,7 +48,7 @@ def update_entity(entity_id: int, entity: schemas.EntityUpdate, session: Session
 
 # Delete Entity by ID 
 @router.delete("/entities/{entity_id}/", tags=["entities"])
-def delete_entity(entity_id: int, session: Session = Depends(get_session)):
+def delete_entity(entity_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("delete_entities"))):
     entity = session.get(Entity, entity_id)
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")
@@ -57,14 +58,14 @@ def delete_entity(entity_id: int, session: Session = Depends(get_session)):
 
 # Additional Endpoints for Entity Status History and Maintenance Logs 
 @router.get("/entities/{entity_id}/status-history/", response_model=List[schemas.EntityStatusHistoryRead], tags=["entities"])
-def list_entity_status_history(entity_id: int, session: Session = Depends(get_session)):
+def list_entity_status_history(entity_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_entities"))):
     entity = session.get(Entity, entity_id)
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")
     return entity.status_history
 
 @router.get("/entities/{entity_id}/maintenance-logs/", response_model=List[schemas.MaintenanceLogRead], tags=["entities"])
-def list_entity_maintenance_logs(entity_id: int, session: Session = Depends(get_session)):
+def list_entity_maintenance_logs(entity_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_entities"))):
     entity = session.get(Entity, entity_id)
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")

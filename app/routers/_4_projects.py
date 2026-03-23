@@ -2,19 +2,21 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from app.database import get_session
-from app.models.tables import (Project)
+from app.models.tables import (Project, User)
 from app.schemas import schemas
 from app.services.create_entity import New_entity
 from app.services.create_entitystatusHistory import create_status_history
 from app.services.update_entity import update_entity_status
 from app.config.entities import ENTITY_CONFIG
+from app.routers.auth import require_permission
+
 entity_config = ENTITY_CONFIG.get("project")
 
 router = APIRouter()
 
 # ===================== PROJECT ENDPOINTS =====================
 @router.post("/projects/", response_model=schemas.ProjectRead, tags=["projects"])
-def create_project(project: schemas.ProjectCreate, session: Session = Depends(get_session)):
+def create_project(project: schemas.ProjectCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_projects"))):
     db_project = Project(**project.model_dump())
     session.add(db_project)
     session.flush()
@@ -36,7 +38,7 @@ def create_project(project: schemas.ProjectCreate, session: Session = Depends(ge
     )
 
 @router.get("/projects/", response_model=List[schemas.ProjectRead], tags=["projects"])
-def list_projects(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
+def list_projects(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_projects"))):
     projects = session.exec(select(Project).offset(skip).limit(limit)).all()
     result = []
     for project in projects:
@@ -49,7 +51,7 @@ def list_projects(skip: int = 0, limit: int = 100, session: Session = Depends(ge
     return result
 
 @router.get("/projects/{project_id}/", response_model=schemas.ProjectRead, tags=["projects"])
-def get_project(project_id: int, session: Session = Depends(get_session)):
+def get_project(project_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_projects"))):
     project = session.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -61,7 +63,7 @@ def get_project(project_id: int, session: Session = Depends(get_session)):
     )
 
 @router.put("/projects/{project_id}/", response_model=schemas.ProjectRead, tags=["projects"])
-def update_project(project_id: int, project: schemas.ProjectUpdate, session: Session = Depends(get_session)):
+def update_project(project_id: int, project: schemas.ProjectUpdate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("edit_projects"))):
     db_project = session.get(Project, project_id)
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -83,7 +85,7 @@ def update_project(project_id: int, project: schemas.ProjectUpdate, session: Ses
     )
 
 @router.delete("/projects/{project_id}/", tags=["projects"])
-def delete_project(project_id: int, session: Session = Depends(get_session)):
+def delete_project(project_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("delete_projects"))):
     project = session.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -92,7 +94,7 @@ def delete_project(project_id: int, session: Session = Depends(get_session)):
     return {"ok": True}
 
 @router.get("/projects/{project_id}/systems/", response_model=List[schemas.SystemRead], tags=["projects"])
-def list_project_systems(project_id: int, session: Session = Depends(get_session)):
+def list_project_systems(project_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_projects"))):
     project = session.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")

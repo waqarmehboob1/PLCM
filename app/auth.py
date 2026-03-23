@@ -1,5 +1,5 @@
 """
-Authentication and Authorization Module
+Authentication and Authorization Modules
 Handles JWT token generation, password hashing, and role-based access control
 Works entirely offline - no internet required
 """
@@ -105,64 +105,230 @@ def check_role(user, required_role: str) -> bool:
 
 # ==================== DEFAULT ROLES & PERMISSIONS ====================
 DEFAULT_PERMISSIONS = [
-    {"name": "view_users", "description": "View users"},
+    # ==================== USERS MANAGEMENT ====================
+    {"name": "view_users", "description": "View users list and details"},
     {"name": "create_users", "description": "Create new users"},
     {"name": "edit_users", "description": "Edit user information"},
     {"name": "delete_users", "description": "Delete users"},
+    {"name": "assign_roles", "description": "Assign roles to users"},
+    {"name": "remove_roles", "description": "Remove roles from users"},
     
+    # ==================== CUSTOMERS MANAGEMENT ====================
+    {"name": "view_customers", "description": "View customers"},
+    {"name": "create_customers", "description": "Create customers"},
+    {"name": "edit_customers", "description": "Edit customers"},
+    {"name": "delete_customers", "description": "Delete customers"},
+    
+    # ==================== ORDERS MANAGEMENT ====================
+    {"name": "view_orders", "description": "View orders"},
+    {"name": "create_orders", "description": "Create orders"},
+    {"name": "edit_orders", "description": "Edit orders"},
+    {"name": "delete_orders", "description": "Delete orders"},
+    {"name": "approve_orders", "description": "Approve orders"},
+    
+    # ==================== PROJECTS MANAGEMENT ====================
     {"name": "view_projects", "description": "View projects"},
     {"name": "create_projects", "description": "Create projects"},
     {"name": "edit_projects", "description": "Edit projects"},
     {"name": "delete_projects", "description": "Delete projects"},
-    
+    {"name": "assign_project_manager", "description": "Assign project managers"},
+
+    # ==================== SYSTEMS MANAGEMENT ====================
     {"name": "view_systems", "description": "View systems"},
     {"name": "create_systems", "description": "Create systems"},
     {"name": "edit_systems", "description": "Edit systems"},
     {"name": "delete_systems", "description": "Delete systems"},
+
+    # ==================== SUBSYSTEMS MANAGEMENT ====================
+    {"name": "view_subsystems", "description": "View subsystems"},
+    {"name": "create_subsystems", "description": "Create subsystems"},
+    {"name": "edit_subsystems", "description": "Edit subsystems"},
+    {"name": "delete_subsystems", "description": "Delete subsystems"},
     
+    # ==================== MODULES MANAGEMENT ====================
+    {"name": "view_modules", "description": "View modules"},
+    {"name": "create_modules", "description": "Create modules"},
+    {"name": "edit_modules", "description": "Edit modules"},
+    {"name": "delete_modules", "description": "Delete modules"},
+    
+    # ==================== UNITS MANAGEMENT ====================
+    {"name": "view_units", "description": "View units"},
+    {"name": "create_units", "description": "Create units"},
+    {"name": "edit_units", "description": "Edit units"},
+    {"name": "delete_units", "description": "Delete units"},
+
+    # ==================== COMPONENTS MANAGEMENT ====================
     {"name": "view_components", "description": "View components"},
     {"name": "create_components", "description": "Create components"},
     {"name": "edit_components", "description": "Edit components"},
     {"name": "delete_components", "description": "Delete components"},
-    
+
+    # ==================== INVENTORY MANAGEMENT ====================
     {"name": "view_inventory", "description": "View inventory"},
-    {"name": "manage_inventory", "description": "Manage inventory"},
+    {"name": "create_inventory", "description": "Create inventory items"},
+    {"name": "edit_inventory", "description": "Edit inventory items"},
+    {"name": "delete_inventory", "description": "Delete inventory items"},
+
+    # ==================== MAINTENANCE MANAGEMENT ====================
+    {"name": "view_maintenance", "description": "View maintenance logs"},
+    {"name": "create_maintenance", "description": "Create maintenance logs"},
+    {"name": "edit_maintenance", "description": "Edit maintenance logs"},
+    {"name": "approve_maintenance", "description": "Approve maintenance"},
+    {"name": "close_maintenance", "description": "Close maintenance"},
     
+    # ==================== ENTITIES & STATUS ====================
+    {"name": "view_entities", "description": "View entities"},
+    {"name": "create_entities", "description": "Create entities"},
+    {"name": "edit_entities", "description": "Edit entities"},
+    {"name": "delete_entities", "description": "Delete entities"},
+    
+    {"name": "view_statuses", "description": "View statuses"},
+    {"name": "create_statuses", "description": "Create statuses"},
+    {"name": "edit_statuses", "description": "Edit statuses"},
+    {"name": "delete_statuses", "description": "Delete statuses"},
+    
+    {"name": "view_status_history", "description": "View entity status history"},
+    {"name": "create_status_history", "description": "Create status history"},
+    {"name": "edit_status_history", "description": "Edit status history"},
+    {"name": "delete_status_history", "description": "Delete status history"},
+    
+    # ==================== REPORTS & ANALYTICS ====================
     {"name": "view_reports", "description": "View reports"},
-    {"name": "manage_maintenance", "description": "Manage maintenance logs"},
+    {"name": "export_reports", "description": "Export reports"},
+    
+    # ==================== ROLE MANAGEMENT ====================
+    {"name": "view_roles", "description": "View roles"},
+    {"name": "create_roles", "description": "Create roles"},
+    {"name": "edit_roles", "description": "Edit roles"},
+    {"name": "delete_roles", "description": "Delete roles"},
 ]
 
 DEFAULT_ROLES = [
     {
         "name": "Admin",
-        "description": "Full access to all features",
+        "description": "Full access to all features and endpoints",
         "permissions": [p["name"] for p in DEFAULT_PERMISSIONS]
     },
     {
         "name": "ProjectManager",
-        "description": "Can manage projects and teams",
+        "description": "Can manage projects, systems, subsystems and teams",
         "permissions": [
-            "view_users", "view_projects", "create_projects", "edit_projects",
+            # Users
+            "view_users", 
+            # Projects
+            "view_projects", "create_projects", "edit_projects",
+            # Systems
             "view_systems", "create_systems", "edit_systems",
-            "view_components", "create_components", "edit_components",
-            "view_inventory", "view_reports"
+            # Subsystems
+            "view_subsystems", "create_subsystems", "edit_subsystems",
+            # Modules
+            "view_modules", "create_modules", "edit_modules",
+            # Units
+            "view_units", "view_units",
+            # Components
+            "view_components",
+            # Maintenance
+            "view_maintenance", "create_maintenance", "edit_maintenance",
+            # Reports
+            "view_reports",
+            # Entities
+            "view_entities", "create_entities", "edit_entities",
+            # Status
+            "view_statuses", "view_status_history"
         ]
     },
     {
         "name": "Technician",
-        "description": "Can view and manage systems and components",
+        "description": "Can view and manage subsystems, modules, units, components and maintenance",
         "permissions": [
-            "view_users", "view_projects", "view_systems", "edit_systems",
-            "view_components", "edit_components", "view_inventory",
-            "manage_inventory", "manage_maintenance"
+            # Users
+            "view_users",
+            # Projects
+            "view_projects",
+            # Systems
+            "view_systems",
+            # Subsystems
+            "view_subsystems", "edit_subsystems",
+            # Modules
+            "view_modules", "edit_modules",
+            # Units
+            "view_units", "edit_units",
+            # Components
+            "view_components", "edit_components",
+            # Inventory
+            "view_inventory",
+            # Maintenance
+            "view_maintenance", "create_maintenance", "edit_maintenance", "close_maintenance",
+            # Entities
+            "view_entities", "edit_entities",
+            # Status
+            "view_statuses", "view_status_history",
+            # Reports
+            "view_reports"
+        ]
+    },
+    {
+        "name": "Maintenance",
+        "description": "Can manage maintenance logs and close maintenance tickets",
+        "permissions": [
+            # Users
+            "view_users",
+            # Projects
+            "view_projects",
+            # Systems
+            "view_systems",
+            # Subsystems
+            "view_subsystems",
+            # Modules
+            "view_modules",
+            # Units
+            "view_units",
+            # Components
+            "view_components",
+            # Maintenance
+            "view_maintenance", "create_maintenance", "edit_maintenance", "close_maintenance",
+            # Entities
+            "view_entities",
+            # Status
+            "view_statuses", "view_status_history",
+            # Reports
+            "view_reports"
         ]
     },
     {
         "name": "Viewer",
-        "description": "Read-only access",
+        "description": "Read-only access to all resources",
         "permissions": [
-            "view_users", "view_projects", "view_systems",
-            "view_components", "view_inventory", "view_reports"
+            # Users
+            "view_users",
+            # Customers
+            "view_customers",
+            # Orders
+            "view_orders",
+            # Projects
+            "view_projects",
+            # Systems
+            "view_systems",
+            # Subsystems
+            "view_subsystems",
+            # Modules
+            "view_modules",
+            # Units
+            "view_units",
+            # Components
+            "view_components",
+            # Inventory
+            "view_inventory",
+            # Maintenance
+            "view_maintenance",
+            # Entities
+            "view_entities",
+            # Status
+            "view_statuses",
+            # Status History
+            "view_status_history",
+            # Reports
+            "view_reports"
         ]
     }
 ]
@@ -187,4 +353,42 @@ def initialize_roles_and_permissions(session: Session):
         role.permissions = [permission_map[perm_name] for perm_name in role_data["permissions"]]
         session.add(role)
     
+    session.commit()
+
+
+# ==================== SYNC ROLES & PERMISSIONS ====================
+def sync_roles_and_permissions(session: Session):
+    """
+    Sync the database roles and permissions with DEFAULT_PERMISSIONS and DEFAULT_ROLES.
+    - Adds new permissions and roles.
+    - Updates role permissions to match DEFAULT_ROLES.
+    - Does NOT delete existing roles/permissions not in defaults.
+    """
+    from app.models.tables import Role, Permission
+
+    # 1. Sync permissions
+    existing_permissions = {p.name: p for p in session.exec(select(Permission)).all()}
+    for perm_data in DEFAULT_PERMISSIONS:
+        if perm_data["name"] not in existing_permissions:
+            perm = Permission(**perm_data)
+            session.add(perm)
+            session.flush()
+            existing_permissions[perm.name] = perm
+
+    # 2. Sync roles
+    existing_roles = {r.name: r for r in session.exec(select(Role)).all()}
+    for role_data in DEFAULT_ROLES:
+        role = existing_roles.get(role_data["name"])
+        if not role:
+            role = Role(name=role_data["name"], description=role_data["description"])
+            session.add(role)
+            session.flush()
+            existing_roles[role.name] = role
+        # Update role description if changed
+        if role.description != role_data["description"]:
+            role.description = role_data["description"]
+        # Set permissions to match DEFAULT_ROLES
+        perms = [existing_permissions[perm_name] for perm_name in role_data["permissions"] if perm_name in existing_permissions]
+        role.permissions = perms
+
     session.commit()

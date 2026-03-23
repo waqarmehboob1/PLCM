@@ -2,19 +2,21 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from app.database import get_session
-from app.models.tables import (Subsystem)
+from app.models.tables import (Subsystem, User)
 from app.schemas import schemas
 from app.services.create_entity import New_entity
 from app.services.create_entitystatusHistory import create_status_history
 from app.services.update_entity import update_entity_status
 from app.config.entities import ENTITY_CONFIG
+from app.routers.auth import require_permission
+
 entity_config = ENTITY_CONFIG.get("subsystem")
 
 router = APIRouter()
 
 # ===================== SUBSYSTEM ENDPOINTS =====================
 @router.post("/subsystems/", response_model=schemas.SubsystemRead, tags=["subsystems"])
-def create_subsystem(subsystem: schemas.SubsystemCreate, session: Session = Depends(get_session)):
+def create_subsystem(subsystem: schemas.SubsystemCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_subsystems"))):
     db_subsystem = Subsystem(**subsystem.model_dump())
     session.add(db_subsystem)
     session.flush()
@@ -36,7 +38,7 @@ def create_subsystem(subsystem: schemas.SubsystemCreate, session: Session = Depe
     )
 
 @router.get("/subsystems/", response_model=List[schemas.SubsystemRead], tags=["subsystems"])
-def list_subsystems(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
+def list_subsystems(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_subsystems"))):
     subsystems = session.exec(select(Subsystem).offset(skip).limit(limit)).all()
     result = []
     for subsystem in subsystems:
@@ -49,7 +51,7 @@ def list_subsystems(skip: int = 0, limit: int = 100, session: Session = Depends(
     return result
 
 @router.get("/subsystems/{subsystem_id}/", response_model=schemas.SubsystemRead, tags=["subsystems"])
-def get_subsystem(subsystem_id: int, session: Session = Depends(get_session)):
+def get_subsystem(subsystem_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_subsystems"))):
     subsystem = session.get(Subsystem, subsystem_id)
     if not subsystem:
         raise HTTPException(status_code=404, detail="Subsystem not found")
@@ -61,7 +63,7 @@ def get_subsystem(subsystem_id: int, session: Session = Depends(get_session)):
     )
 
 @router.put("/subsystems/{subsystem_id}/", response_model=schemas.SubsystemRead, tags=["subsystems"])
-def update_subsystem(subsystem_id: int, subsystem: schemas.SubsystemUpdate, session: Session = Depends(get_session)):
+def update_subsystem(subsystem_id: int, subsystem: schemas.SubsystemUpdate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("edit_subsystems"))):
     db_subsystem = session.get(Subsystem, subsystem_id)
     if not db_subsystem:
         raise HTTPException(status_code=404, detail="Subsystem not found")
@@ -84,7 +86,7 @@ def update_subsystem(subsystem_id: int, subsystem: schemas.SubsystemUpdate, sess
     )
 
 @router.delete("/subsystems/{subsystem_id}/", tags=["subsystems"])
-def delete_subsystem(subsystem_id: int, session: Session = Depends(get_session)):
+def delete_subsystem(subsystem_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("delete_subsystems"))):
     subsystem = session.get(Subsystem, subsystem_id)
     if not subsystem:
         raise HTTPException(status_code=404, detail="Subsystem not found")
@@ -93,7 +95,7 @@ def delete_subsystem(subsystem_id: int, session: Session = Depends(get_session))
     return {"ok": True}
 
 @router.get("/subsystems/{subsystem_id}/modules/", response_model=List[schemas.ModuleRead], tags=["subsystems"])
-def list_subsystem_modules(subsystem_id: int, session: Session = Depends(get_session)):
+def list_subsystem_modules(subsystem_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_subsystems"))):
     subsystem = session.get(Subsystem, subsystem_id)
     if not subsystem:
         raise HTTPException(status_code=404, detail="Subsystem not found")

@@ -4,11 +4,12 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models.tables import (User)
 from app.schemas import schemas
+from app.routers.auth import require_permission, get_current_user
 
 router = APIRouter()
 # ===================== USER ENDPOINTS =====================
 @router.post("/users/", response_model=schemas.UserRead, tags=["users"])
-def create_user(user: schemas.UserCreate, session: Session = Depends(get_session)):
+def create_user(user: schemas.UserCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_users"))):
     db_user = User(**user.model_dump())
     session.add(db_user)
     session.commit()
@@ -16,18 +17,18 @@ def create_user(user: schemas.UserCreate, session: Session = Depends(get_session
     return db_user
 
 @router.get("/users/", response_model=List[schemas.UserRead], tags=["users"])
-def list_users(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
+def list_users(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_users"))):
     return session.exec(select(User).offset(skip).limit(limit)).all()
 
 @router.get("/users/{user_id}/", response_model=schemas.UserRead, tags=["users"])
-def get_user(user_id: int, session: Session = Depends(get_session)):
+def get_user(user_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_users"))):
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 @router.put("/users/{user_id}/", response_model=schemas.UserRead, tags=["users"])
-def update_user(user_id: int, user: schemas.UserUpdate, session: Session = Depends(get_session)):
+def update_user(user_id: int, user: schemas.UserUpdate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("edit_users"))):
     db_user = session.get(User, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -39,7 +40,7 @@ def update_user(user_id: int, user: schemas.UserUpdate, session: Session = Depen
     return db_user
 
 @router.delete("/users/{user_id}/", tags=["users"])
-def delete_user(user_id: int, session: Session = Depends(get_session)):
+def delete_user(user_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("delete_users"))):
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -48,7 +49,7 @@ def delete_user(user_id: int, session: Session = Depends(get_session)):
     return {"ok": True}
 
 @router.get("/users/{user_id}/projects/", response_model=List[schemas.ProjectRead], tags=["users"])
-def list_user_projects(user_id: int, session: Session = Depends(get_session)):
+def list_user_projects(user_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_users"))):
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

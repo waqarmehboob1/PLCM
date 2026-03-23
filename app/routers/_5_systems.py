@@ -2,19 +2,21 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from app.database import get_session
-from app.models.tables import (System)
+from app.models.tables import (System, User)
 from app.schemas import schemas
 from app.services.create_entity import New_entity
 from app.services.create_entitystatusHistory import create_status_history
 from app.services.update_entity import update_entity_status
 from app.config.entities import ENTITY_CONFIG
+from app.routers.auth import require_permission
+
 entity_config = ENTITY_CONFIG.get("system")
 
 router = APIRouter()
 
 # ===================== SYSTEM ENDPOINTS =====================
 @router.post("/systems/", response_model=schemas.SystemRead, tags=["systems"])
-def create_system(system: schemas.SystemCreate, session: Session = Depends(get_session)):
+def create_system(system: schemas.SystemCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_systems"))):
     db_system = System(**system.dict())
     session.add(db_system)
     session.flush()
@@ -36,7 +38,7 @@ def create_system(system: schemas.SystemCreate, session: Session = Depends(get_s
     )
 
 @router.get("/systems/", response_model=List[schemas.SystemRead], tags=["systems"])
-def list_systems(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
+def list_systems(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_systems"))):
     systems = session.exec(select(System).offset(skip).limit(limit)).all()
     result = []
     for system in systems:
@@ -49,7 +51,7 @@ def list_systems(skip: int = 0, limit: int = 100, session: Session = Depends(get
     return result
 
 @router.get("/systems/{system_id}/", response_model=schemas.SystemRead, tags=["systems"])
-def get_system(system_id: int, session: Session = Depends(get_session)):
+def get_system(system_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_systems"))):
     system = session.get(System, system_id)
     if not system:
         raise HTTPException(status_code=404, detail="System not found")
@@ -61,7 +63,7 @@ def get_system(system_id: int, session: Session = Depends(get_session)):
     )
 
 @router.put("/systems/{system_id}/", response_model=schemas.SystemRead, tags=["systems"])
-def update_system(system_id: int, system: schemas.SystemUpdate, session: Session = Depends(get_session)):
+def update_system(system_id: int, system: schemas.SystemUpdate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("edit_systems"))):
     db_system = session.get(System, system_id)
     if not db_system:
         raise HTTPException(status_code=404, detail="System not found")
@@ -84,7 +86,7 @@ def update_system(system_id: int, system: schemas.SystemUpdate, session: Session
     )
 
 @router.delete("/systems/{system_id}/", tags=["systems"])
-def delete_system(system_id: int, session: Session = Depends(get_session)):
+def delete_system(system_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("delete_systems"))):
     system = session.get(System, system_id)
     if not system:
         raise HTTPException(status_code=404, detail="System not found")
@@ -93,7 +95,7 @@ def delete_system(system_id: int, session: Session = Depends(get_session)):
     return {"ok": True}
 
 @router.get("/systems/{system_id}/subsystems/", response_model=List[schemas.SubsystemRead], tags=["systems"])
-def list_system_subsystems(system_id: int, session: Session = Depends(get_session)):
+def list_system_subsystems(system_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_systems"))):
     system = session.get(System, system_id)
     if not system:
         raise HTTPException(status_code=404, detail="System not found")

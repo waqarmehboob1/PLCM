@@ -2,19 +2,21 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from app.database import get_session
-from app.models.tables import (Unit)
+from app.models.tables import (Unit, User)
 from app.schemas import schemas
 from app.services.create_entity import New_entity
 from app.services.create_entitystatusHistory import create_status_history
 from app.services.update_entity import update_entity_status
 from app.config.entities import ENTITY_CONFIG
+from app.routers.auth import require_permission
+
 entity_config = ENTITY_CONFIG.get("unit")
 
 router = APIRouter()
 
 # ===================== UNIT ENDPOINTS =====================
 @router.post("/units/", response_model=schemas.UnitRead, tags=["units"])
-def create_unit(unit: schemas.UnitCreate, session: Session = Depends(get_session)):
+def create_unit(unit: schemas.UnitCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_units"))):
     db_unit = Unit(**unit.model_dump())
     session.add(db_unit)
     session.flush()
@@ -36,7 +38,7 @@ def create_unit(unit: schemas.UnitCreate, session: Session = Depends(get_session
     )
 
 @router.get("/units/", response_model=List[schemas.UnitRead], tags=["units"])
-def list_units(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
+def list_units(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_units"))):
     units = session.exec(select(Unit).offset(skip).limit(limit)).all()
     result = []
     for unit in units:
@@ -49,7 +51,7 @@ def list_units(skip: int = 0, limit: int = 100, session: Session = Depends(get_s
     return result
 
 @router.get("/units/{unit_id}/", response_model=schemas.UnitRead, tags=["units"])
-def get_unit(unit_id: int, session: Session = Depends(get_session)):
+def get_unit(unit_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_units"))):
     unit = session.get(Unit, unit_id)
     if not unit:
         raise HTTPException(status_code=404, detail="Unit not found")
@@ -61,7 +63,7 @@ def get_unit(unit_id: int, session: Session = Depends(get_session)):
     )
 
 @router.put("/units/{unit_id}/", response_model=schemas.UnitRead, tags=["units"])
-def update_unit(unit_id: int, unit: schemas.UnitUpdate, session: Session = Depends(get_session)):
+def update_unit(unit_id: int, unit: schemas.UnitUpdate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("edit_units"))):
     db_unit = session.get(Unit, unit_id)
     if not db_unit:
         raise HTTPException(status_code=404, detail="Unit not found")
@@ -84,7 +86,7 @@ def update_unit(unit_id: int, unit: schemas.UnitUpdate, session: Session = Depen
     )
 
 @router.delete("/units/{unit_id}/", tags=["units"])
-def delete_unit(unit_id: int, session: Session = Depends(get_session)):
+def delete_unit(unit_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("delete_units"))):
     unit = session.get(Unit, unit_id)
     if not unit:
         raise HTTPException(status_code=404, detail="Unit not found")
@@ -93,7 +95,7 @@ def delete_unit(unit_id: int, session: Session = Depends(get_session)):
     return {"ok": True}
 
 @router.get("/units/{unit_id}/components/", response_model=List[schemas.ComponentRead], tags=["units"])
-def list_unit_components(unit_id: int, session: Session = Depends(get_session)):
+def list_unit_components(unit_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_units"))):
     unit = session.get(Unit, unit_id)
     if not unit:
         raise HTTPException(status_code=404, detail="Unit not found")

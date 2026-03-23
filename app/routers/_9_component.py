@@ -2,19 +2,21 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from app.database import get_session
-from app.models.tables import (Component)
+from app.models.tables import (Component, User)
 from app.schemas import schemas
 from app.services.create_entity import New_entity
 from app.services.create_entitystatusHistory import create_status_history
 from app.services.update_entity import update_entity_status
 from app.config.entities import ENTITY_CONFIG
-entity_config = ENTITY_CONFIG.get("component    ")
+from app.routers.auth import require_permission
+
+entity_config = ENTITY_CONFIG.get("component")
 
 router = APIRouter()
 
 # ===================== COMPONENT ENDPOINTS =====================
 @router.post("/components/", response_model=schemas.ComponentRead, tags=["components"])
-def create_component(component: schemas.ComponentCreate, session: Session = Depends(get_session)):
+def create_component(component: schemas.ComponentCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_components"))):
     db_component = Component(**component.model_dump())
     session.add(db_component)
     session.flush()
@@ -36,7 +38,7 @@ def create_component(component: schemas.ComponentCreate, session: Session = Depe
     )
 
 @router.get("/components/", response_model=List[schemas.ComponentRead], tags=["components"])
-def list_components(skip: int = 0, limit: int = 100, session: Session = Depends(get_session)):
+def list_components(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_components"))):
     components = session.exec(select(Component).offset(skip).limit(limit)).all()
     result = []
     for component in components:
@@ -49,7 +51,7 @@ def list_components(skip: int = 0, limit: int = 100, session: Session = Depends(
     return result
 
 @router.get("/components/{component_id}/", response_model=schemas.ComponentRead, tags=["components"])
-def get_component(component_id: int, session: Session = Depends(get_session)):
+def get_component(component_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_components"))):
     component = session.get(Component, component_id)
     if not component:
         raise HTTPException(status_code=404, detail="Component not found")
@@ -61,7 +63,7 @@ def get_component(component_id: int, session: Session = Depends(get_session)):
     )
 
 @router.put("/components/{component_id}/", response_model=schemas.ComponentRead, tags=["components"])
-def update_component(component_id: int, component: schemas.ComponentUpdate, session: Session = Depends(get_session)):
+def update_component(component_id: int, component: schemas.ComponentUpdate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("edit_components"))):
     db_component = session.get(Component, component_id)
     if not db_component:
         raise HTTPException(status_code=404, detail="Component not found")
@@ -84,7 +86,7 @@ def update_component(component_id: int, component: schemas.ComponentUpdate, sess
     )
 
 @router.delete("/components/{component_id}/", tags=["components"])
-def delete_component(component_id: int, session: Session = Depends(get_session)):
+def delete_component(component_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("delete_components"))):
     component = session.get(Component, component_id)
     if not component:
         raise HTTPException(status_code=404, detail="Component not found")
@@ -93,7 +95,7 @@ def delete_component(component_id: int, session: Session = Depends(get_session))
     return {"ok": True}
 
 @router.get("/components/{component_id}/inventory/", response_model=List[schemas.InventoryRead], tags=["components"])
-def list_component_inventory(component_id: int, session: Session = Depends(get_session)):
+def list_component_inventory(component_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_components"))):
     component = session.get(Component, component_id)
     if not component:
         raise HTTPException(status_code=404, detail="Component not found")

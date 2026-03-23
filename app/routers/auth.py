@@ -6,7 +6,7 @@ Handles user login, logout, password changes, and role management
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, status, Header
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 from app.database import get_session
 from app.models.tables import User, Role, Permission
 from app.schemas import schemas
@@ -290,3 +290,13 @@ def get_current_user_permissions(
 ):
     """Get all permissions for the current user."""
     return get_user_permissions(user)
+
+class MessageResponse(SQLModel):
+    message: str
+
+from app.auth import sync_roles_and_permissions
+@router.get("/updateDefaultpermissions", response_model=MessageResponse)
+def update_default_permissions(session: Session = Depends(get_session)):
+    """Get all permissions for the current user."""
+    sync_roles_and_permissions(session)
+    return {"message": "Default permissions synchronized successfully"}

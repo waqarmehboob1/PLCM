@@ -132,7 +132,7 @@ class PermissionCommon(SQLModel):
     description: Optional[str] = None
 
 class PermissionBase(PermissionCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class RoleCommon(SQLModel):
     name: str  # e.g., "Admin", "ProjectManager", "Viewer"
