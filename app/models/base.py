@@ -17,8 +17,7 @@ class UserCommon(SQLModel):
 
 class UserBase(UserCommon):
     password:str
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
-
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 class ProjectCommon(SQLModel):
     name: str
     description: Optional[str] = None

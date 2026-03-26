@@ -43,6 +43,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is inactive",
         )
+    
     return user
 
 def require_permission(permission: str):
@@ -110,8 +111,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = D
     )
 
 @router.post("/register", response_model=schemas.UserReadWithRoles)
-def register(user_data: schemas.UserCreate, session: Session = Depends(get_session)
-):
+def register(
+    user_data: schemas.UserCreate, 
+    session: Session = Depends(get_session)
+    ):
     """Register a new user. New users get the 'Viewer' role by default."""
     existing_user = session.exec(select(User).where(User.username == user_data.username)).first()
     
@@ -139,11 +142,9 @@ def register(user_data: schemas.UserCreate, session: Session = Depends(get_sessi
     )
     print("REGISTERING USER:", db_user)
     db_user.roles = [default_role]
-    
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
-    
     return db_user
 
 @router.post("/change-password")
@@ -158,11 +159,9 @@ def change_password(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect",
         )
-    
     user.password = hash_password(change_pwd.new_password)
     session.add(user)
     session.commit()
-    
     return {"message": "Password changed successfully"}
 
 # ==================== ROLE MANAGEMENT ENDPOINTS ====================
@@ -230,14 +229,25 @@ def assign_role_to_user(
     """Assign a role to a user. Requires Admin role."""
     target_user = session.get(User, assignment.user_id)
     if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=404, 
+            detail="User not found")
     
     role = session.get(Role, assignment.role_id)
     if not role:
-        raise HTTPException(status_code=404, detail="Role not found")
+        raise HTTPException(
+            status_code=404, 
+            detail="Role not found")
     
+    is_admin = assignment.role_id == session.exec(select(Role.id).where(Role.name == "Admin")).first()
+    if is_admin:
+        raise HTTPException(
+            status_code= status.HTTP_403_FORBIDDEN,
+            detail= "Admin Already exists. Cannot assign Admin role to another user."
+        )
+
     if role not in target_user.roles:
-        target_user.roles.append(role)
+        target_user.roles.append(role)  
         session.add(target_user)
         session.commit()
     
@@ -262,6 +272,12 @@ def remove_role_from_user(
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     
+    if user.roles and check_role(user, "Admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot remove role from user with Admin role."
+        )
+
     if role in target_user.roles:
         target_user.roles.remove(role)
         session.add(target_user)

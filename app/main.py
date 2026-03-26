@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .database import init_db, close_db, engine
+from app.database import init_db, close_db, engine
 from sqlmodel import Session
 from contextlib import asynccontextmanager
 from app.routers import router
@@ -28,3 +28,4 @@ def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", reload=True)
+    # uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

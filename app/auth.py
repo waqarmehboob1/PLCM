@@ -11,6 +11,7 @@ from jose import JWTError, jwt
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 from pwdlib import PasswordHash
+from app.models.tables import User
 
 # Configuration
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -100,7 +101,7 @@ def check_permission(user, required_permission: str) -> bool:
     permissions = get_user_permissions(user)
     return required_permission in permissions
 
-def check_role(user, required_role: str) -> bool:
+def check_role(user:User, required_role: str) -> bool:
     return any(role.name == required_role for role in user.roles)
 
 # ==================== DEFAULT ROLES & PERMISSIONS ====================

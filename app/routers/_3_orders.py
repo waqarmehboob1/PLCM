@@ -93,7 +93,7 @@ def delete_order(order_id: int, session: Session = Depends(get_session), current
     return {"ok": True}
 
 @router.get("/orders/{order_id}/projects/", response_model=List[schemas.ProjectRead], tags=["orders"])
-def list_order_projects(order_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_orders"))):
+def list_order_projects(order_id: int, session: Session = Depends(get_session)):
     order = session.get(Order, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
