@@ -28,15 +28,15 @@ class ProjectCommon(SQLModel):
     status_id: Optional[int] = None
 
 class ProjectBase(ProjectCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CustomerCommon(SQLModel):
     name: str
     contact_info: Optional[str] = None
 
 class CustomerBase(CustomerCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class StatusCommon(SQLModel):
     name: str
@@ -44,7 +44,7 @@ class StatusCommon(SQLModel):
     status_type: Optional[str] = None
     
 class StatusBase(StatusCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class OrderCommon(SQLModel):
     customer_id: int
@@ -52,35 +52,35 @@ class OrderCommon(SQLModel):
     status_id: Optional[int] = None
 
 class OrderBase(OrderCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SystemCommon(SQLModel):
     name: str
     description: Optional[str] = None
 
 class SystemBase(SystemCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SubsystemCommon(SQLModel):
     name: str
     description: Optional[str] = None
 
 class SubsystemBase(SubsystemCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ModuleCommon(SQLModel):
     name: str
     description: Optional[str] = None
 
 class ModuleBase(ModuleCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class UnitCommon(SQLModel):
     name: str
     description: Optional[str] = None
 
 class UnitBase(UnitCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ComponentCommon(SQLModel):
     name: str
@@ -89,7 +89,7 @@ class ComponentCommon(SQLModel):
 
 
 class ComponentBase(ComponentCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class EntityCommon(SQLModel):
     name: str
@@ -98,7 +98,7 @@ class EntityCommon(SQLModel):
     entity_pk: int
 
 class EntityBase(EntityCommon):
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class EntityStatusHistoryCommon(SQLModel):
     entity_id: Optional[int] = None
@@ -107,7 +107,7 @@ class EntityStatusHistoryCommon(SQLModel):
     notes: Optional[str] = None
 
 class EntityStatusHistoryBase(EntityStatusHistoryCommon):
-    changed_at: datetime = Field(default_factory=datetime.utcnow)
+    changed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class MaintenanceLogCommon(SQLModel):
     entity_id: int
@@ -115,7 +115,7 @@ class MaintenanceLogCommon(SQLModel):
     next_due: Optional[datetime] = None
     
 class MaintenanceLogBase(MaintenanceLogCommon):
-    performed_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    performed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class InventoryCommon(SQLModel):
     component_id: int
@@ -123,7 +123,7 @@ class InventoryCommon(SQLModel):
     location: Optional[str] = None
 
 class InventoryBase(InventoryCommon):
-    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))   
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))   
 
 # ===== AUTHENTICATION & AUTHORIZATION MODELS =====
 class PermissionCommon(SQLModel):
@@ -131,14 +131,14 @@ class PermissionCommon(SQLModel):
     description: Optional[str] = None
 
 class PermissionBase(PermissionCommon):
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class RoleCommon(SQLModel):
     name: str  # e.g., "Admin", "ProjectManager", "Viewer"
     description: Optional[str] = None
 
 class RoleBase(RoleCommon):
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Token(SQLModel):
     access_token: str

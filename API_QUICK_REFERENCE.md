@@ -30,8 +30,8 @@ DELETE /{resource}/{id}/         → Delete
 | **Inventory** | POST `/inventory/` | GET `/inventory/` | GET `/inventory/{id}/` | PUT `/inventory/{id}/` | DELETE `/inventory/{id}/` | - |
 | **Statuses** | POST `/statuses/` | GET `/statuses/` | GET `/statuses/{id}/` | PUT `/statuses/{id}/` | DELETE `/statuses/{id}/` | - |
 | **Entities** | POST `/entities/` | GET `/entities/` | GET `/entities/{id}/` | PUT `/entities/{id}/` | DELETE `/entities/{id}/` | GET `/entities/{id}/status-history/`<br>GET `/entities/{id}/maintenance-logs/` |
-| **Status History** | POST `/entitystatushistory/` | GET `/entitystatushistory/` | GET `/entitystatushistory/{id}/` | PUT `/entitystatushistory/{id}/` | DELETE `/entitystatushistory/{id}/` | - |
-| **Maintenance Logs** | POST `/maintenancelogs/` | GET `/maintenancelogs/` | GET `/maintenancelogs/{id}/` | PUT `/maintenancelogs/{id}/` | DELETE `/maintenancelogs/{id}/` | - |
+| **Status History** | POST `/entity-status-history/` | GET `/entity-status-history/` | GET `/entity-status-history/{id}/` | PUT `/entity-status-history/{id}/` | DELETE `/entity-status-history/{id}/` | - |
+| **Maintenance Logs** | POST `/maintenance-logs/` | GET `/maintenance-logs/` | GET `/maintenance-logs/{id}/` | PUT `/maintenance-logs/{id}/` | DELETE `/maintenance-logs/{id}/` | - |
 
 ## Common Request Templates
 

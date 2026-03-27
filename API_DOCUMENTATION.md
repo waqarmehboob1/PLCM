@@ -993,7 +993,7 @@ GET /api/entities/{entity_id}/maintenance-logs/
 
 #### Create Status History
 ```http
-POST /api/entitystatushistory/
+POST /api/entity-status-history/
 Content-Type: application/json
 
 {
@@ -1008,21 +1008,21 @@ Content-Type: application/json
 
 #### List Status History
 ```http
-GET /api/entitystatushistory/?skip=0&limit=10
+GET /api/entity-status-history/?skip=0&limit=10
 ```
 
 **Response:** `200 OK` - Array of EntityStatusHistory objects
 
 #### Get Status History by ID
 ```http
-GET /api/entitystatushistory/{history_id}/
+GET /api/entity-status-history/{history_id}/
 ```
 
 **Response:** `200 OK` - EntityStatusHistory object
 
 #### Update Status History
 ```http
-PUT /api/entitystatushistory/{history_id}/
+PUT /api/entity-status-history/{history_id}/
 Content-Type: application/json
 
 {
@@ -1037,7 +1037,7 @@ Content-Type: application/json
 
 #### Delete Status History
 ```http
-DELETE /api/entitystatushistory/{history_id}/
+DELETE /api/entity-status-history/{history_id}/
 ```
 
 **Response:** `200 OK`
@@ -1053,7 +1053,7 @@ DELETE /api/entitystatushistory/{history_id}/
 
 #### Create Maintenance Log
 ```http
-POST /api/maintenancelogs/
+POST /api/maintenance-logs/
 Content-Type: application/json
 
 {
@@ -1069,21 +1069,21 @@ Content-Type: application/json
 
 #### List Maintenance Logs
 ```http
-GET /api/maintenancelogs/?skip=0&limit=10
+GET /api/maintenance-logs/?skip=0&limit=10
 ```
 
 **Response:** `200 OK` - Array of MaintenanceLog objects
 
 #### Get Maintenance Log by ID
 ```http
-GET /api/maintenancelogs/{log_id}/
+GET /api/maintenance-logs/{log_id}/
 ```
 
 **Response:** `200 OK` - MaintenanceLog object
 
 #### Update Maintenance Log
 ```http
-PUT /api/maintenancelogs/{log_id}/
+PUT /api/maintenance-logs/{log_id}/
 Content-Type: application/json
 
 {
@@ -1098,7 +1098,7 @@ Content-Type: application/json
 
 #### Delete Maintenance Log
 ```http
-DELETE /api/maintenancelogs/{log_id}/
+DELETE /api/maintenance-logs/{log_id}/
 ```
 
 **Response:** `200 OK`
