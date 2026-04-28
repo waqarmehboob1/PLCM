@@ -40,6 +40,8 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: int
     projects: Optional[List["ProjectRead"]] = None
+    roles: Optional[List["RoleRead"]] = None
+    permissions: List[str] = []
 
     class Config:
         orm_mode = True

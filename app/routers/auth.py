@@ -121,10 +121,12 @@ def register(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists",
+            detail="Username already existed",
         )
     
-    default_role = session.exec(select(Role).where(Role.name == "Viewer")).first()
+    default_role = session.exec(select(Role).where(Role.name == "Admin")).first()
+
+    print("DEFAULT ROLE:", default_role)
     
     if not default_role:
         raise HTTPException(
@@ -140,7 +142,6 @@ def register(
         is_active=True,
         password=hashed_password
     )
-    print("REGISTERING USER:", db_user)
     db_user.roles = [default_role]
     session.add(db_user)
     session.commit()

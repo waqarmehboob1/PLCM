@@ -19,6 +19,7 @@ def create_customer(customer: schemas.CustomerCreate, session: Session = Depends
 
 @router.get("/customers/", response_model=List[schemas.CustomerRead], tags=["customers"])
 def list_customers(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_customers"))):
+    return {"msg": "working"}
     return session.exec(select(Customer).offset(skip).limit(limit)).all()
 
 @router.get("/customers/{customer_id}/", response_model=schemas.CustomerRead, tags=["customers"])

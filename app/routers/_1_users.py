@@ -47,6 +47,7 @@ def create_user(
         username=user.username,
         full_name= user.full_name,
         email= user.email,
+        is_active=True,
         password = hashed_password,
     )
     db_user.roles = [default_role]
@@ -60,7 +61,7 @@ def create_user(
 def list_users(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_users"))):
     return session.exec(select(User).offset(skip).limit(limit)).all()
 
-@router.get("/users/{user_id}/", response_model=schemas.UserRead, tags=["users"])
+@router.get("/users/{user_id}/", response_model=schemas.UserReadWithRoles, tags=["users"])
 def get_user(user_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_users"))):
     user = session.get(User, user_id)
     if not user:

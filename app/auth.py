@@ -379,7 +379,7 @@ def sync_roles_and_permissions(session: Session):
     # 2. Sync roles
     existing_roles = {r.name: r for r in session.exec(select(Role)).all()}
     for role_data in DEFAULT_ROLES:
-        role = existing_roles.get(role_data["name"])
+        role = existing_roles.get(role_data["nam e"])
         if not role:
             role = Role(name=role_data["name"], description=role_data["description"])
             session.add(role)
