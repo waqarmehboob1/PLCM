@@ -25,7 +25,7 @@ def create_module(module: schemas.ModuleCreate, session: Session = Depends(get_s
 #    1.  Entity status
 #    2.  Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    New_entity(session=session, entity=db_module, entity_name = entity_config["display_name"])
+    New_entity(session=session, entity=db_module, entity_name = entity_config["display_name"], changed_by_user= current_user.id)
 # --------------------------------------------------------------------------------------------------------------------------------------------
     session.commit()
     session.refresh(db_module)

@@ -23,7 +23,7 @@ def create_order(order: schemas.OrderCreate, session: Session = Depends(get_sess
 
 # 1. Create Entity status    2. maintain Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    New_entity(session=session, entity=db_order, entity_name = entity_config["display_name"])
+    New_entity(session=session, entity=db_order, entity_name = entity_config["display_name"], changed_by_user= current_user.id)
 # --------------------------------------------------------------------------------------------------------------------------------------------
     session.commit()
     session.refresh(db_order)

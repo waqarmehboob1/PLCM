@@ -25,7 +25,7 @@ def create_unit(unit: schemas.UnitCreate, session: Session = Depends(get_session
 #    1.  Entity status
 #    2.  Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    New_entity(session=session, entity=db_unit, entity_name = entity_config["display_name"])
+    New_entity(session=session, entity=db_unit, entity_name = entity_config["display_name"], changed_by_user= current_user.id)
 # --------------------------------------------------------------------------------------------------------------------------------------------
 
     session.commit()

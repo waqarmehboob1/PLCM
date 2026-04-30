@@ -16,26 +16,34 @@ async def lifespan(app: FastAPI):
     finally:
         # shutdown
         close_db()
-    yield
+    
 
 app: FastAPI = FastAPI(title="PLCM System", lifespan=lifespan)
 
 from fastapi.middleware.cors import CORSMiddleware
 
+origins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',  # optional but safe
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # for development
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # IMPORTANT: allows OPTIONS
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:3000"],  # Next.js
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 app.include_router(router, prefix="/api")
-
-
-
 
 @app.get("/")
 def root():
