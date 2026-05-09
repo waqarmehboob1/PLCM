@@ -123,7 +123,8 @@ class ProjectUpdate(SQLModel):
 
 # ---- System / Subsystem / Module / Unit / Component ----
 class SystemCreate(SystemBase):
-    pass
+    status_id: Optional[int] = None
+    status_name: Optional[str] = None
 
 class SystemRead(SystemBase):
     id: int
