@@ -57,6 +57,8 @@ class OrderBase(OrderCommon):
 class SystemCommon(SQLModel):
     name: str
     description: Optional[str] = None
+    project_id: int
+    status_id: Optional[int] = None
 
 class SystemBase(SystemCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

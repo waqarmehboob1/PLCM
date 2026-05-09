@@ -44,8 +44,17 @@ def create_statuses(
     return db_statuses
 
 @router.get("/statuses/", response_model=List[schemas.StatusRead], tags=["statuses"])
-def list_statuses(session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_statuses"))):
-    return session.exec(select(Status)).all()
+def list_statuses(
+    status_type: str | None = None,   # 👈 add this
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_permission("view_statuses"))
+):
+    query = select(Status)
+
+    if status_type:
+        query = query.where(Status.status_type == status_type)
+
+    return session.exec(query).all()
 
 @router.get("/statuses/{status_id}/", response_model=schemas.StatusRead, tags=["statuses"])
 def get_status(status_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_statuses"))):
