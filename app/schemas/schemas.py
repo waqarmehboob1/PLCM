@@ -295,6 +295,17 @@ class MaintenanceLogUpdate(SQLModel):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 # ---- Authentication & Authorization ----
 
 class PermissionRead(SQLModel):

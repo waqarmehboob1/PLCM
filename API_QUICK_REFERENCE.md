@@ -160,14 +160,16 @@ const result = await delete_('users', 1);
 ## Hierarchy Structure
 
 ```
-User
-└── Projects (many)
-    ├── Systems (many)
-    │   ├── Subsystems (many)
-    │   │   ├── Modules (many)
-    │   │   │   ├── Units (many)
-    │   │   │   │   ├── Components (many)
-    │   │   │   │   │   └── Inventory Items (many)
+
+├──Customer
+  ├──Orders (many)
+  │  ├── Projects (many)
+  │  │  ├── Systems (many)
+  │  │  │  ├── Subsystems (many)
+  │  │  │  │  ├── Modules (many)
+  │  │  │  │  │  ├── Units (many)
+  │  │  │  │  │  │   ├── Components (many)
+  │  │  │  │  │  │   └── Inventory Items (many)
 
 Order
 └── Projects (many)
