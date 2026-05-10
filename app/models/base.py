@@ -59,6 +59,9 @@ class SystemCommon(SQLModel):
     description: Optional[str] = None
     project_id: int
     status_id: Optional[int] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 class SystemBase(SystemCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -66,6 +69,9 @@ class SystemBase(SystemCommon):
 class SubsystemCommon(SQLModel):
     name: str
     description: Optional[str] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 class SubsystemBase(SubsystemCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -73,6 +79,9 @@ class SubsystemBase(SubsystemCommon):
 class ModuleCommon(SQLModel):
     name: str
     description: Optional[str] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 class ModuleBase(ModuleCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -80,6 +89,9 @@ class ModuleBase(ModuleCommon):
 class UnitCommon(SQLModel):
     name: str
     description: Optional[str] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 class UnitBase(UnitCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -88,6 +100,9 @@ class ComponentCommon(SQLModel):
     name: str
     description: Optional[str] = None
     sku: Optional[str] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 
 class ComponentBase(ComponentCommon):

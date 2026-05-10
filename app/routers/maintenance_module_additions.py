@@ -41,6 +41,7 @@ from models.project import Project           # already in maintenance_module.py
 
 # Re-use the enums and models already defined in maintenance_module.py.
 # If you merge this file, remove these imports and rely on the shared defs.
+
 from maintenance_module import (
     EntityType, FaultType, FaultyEntityStatus, ResolutionType,
     MaintenanceCase, FaultyEntity, FaultyEntityRead,
@@ -198,7 +199,7 @@ _EXTENDED_PARENT_MAP: Dict[str, Tuple[str, Any, str]] = {
 
 # SKU/part-number lookup:  maps entity_type → (SQLModelClass, sku_attr)
 # A single SKU must be unique within each entity type (enforced by your schema).
-_SKU_SEARCH_MODELS: List[Tuple[str, Any, str]] = [
+_SR_SEARCH_MODELS: List[Tuple[str, Any, str]] = [
     (EntityType.COMPONENT, Component, "sku"),
     (EntityType.UNIT,      Unit,      "sku"),
     (EntityType.MODULE,    Module,    "sku"),
@@ -420,7 +421,7 @@ def lookup_entity_by_sku(
     identifier.  Does NOT require knowing the project ID upfront.
 
     The endpoint:
-      1. Searches every entity table in _SKU_SEARCH_MODELS for a matching SKU.
+      1. Searches every entity table in _SR_SEARCH_MODELS for a matching SKU.
       2. Walks UP the hierarchy to find the project, order, and customer.
       3. Walks DOWN the hierarchy to enumerate every child entity.
 
@@ -452,7 +453,7 @@ def lookup_entity_by_sku(
     matched_id:   Optional[int] = None
     matched_label: Optional[str] = None
 
-    for entity_type, model_cls, sku_attr in _SKU_SEARCH_MODELS:
+    for entity_type, model_cls, sku_attr in _SR_SEARCH_MODELS:
         row = session.exec(
             select(model_cls).where(getattr(model_cls, sku_attr) == sku)
         ).first()

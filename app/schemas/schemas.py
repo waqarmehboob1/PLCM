@@ -141,6 +141,9 @@ class SystemUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
     status_id: Optional[int] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 class SubsystemCreate(SubsystemBase):
     system_id: int
@@ -162,6 +165,9 @@ class SubsystemUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
     status_id: Optional[int] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 class ModuleCreate(ModuleBase):
     subsystem_id: int
@@ -182,6 +188,9 @@ class ModuleUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
     status_id: Optional[int] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 class UnitCreate(UnitBase):
     module_id: Optional[int] = None
@@ -202,6 +211,9 @@ class UnitUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
     status_id: Optional[int] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 class ComponentCreate(ComponentBase):
     unit_id: Optional[int] = None
@@ -223,6 +235,9 @@ class ComponentUpdate(SQLModel):
     sku: Optional[str] = None
     description: Optional[str] = None
     status_id: Optional[int] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    configuration_item: Optional[str] = None
 
 # ---- Inventory ----
 class InventoryCreate(InventoryBase):
