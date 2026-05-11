@@ -32,6 +32,7 @@ from app.models.base import (
     MaintenanceLogCommon,
 )
 
+
 # ---- User ----
 
 class UserCreate(UserBase):
@@ -307,14 +308,6 @@ class MaintenanceLogUpdate(SQLModel):
     performed_by: Optional[int] = None
     notes: Optional[str] = None
     next_due: Optional[datetime] = None
-
-
-
-
-
-
-
-
 
 
 

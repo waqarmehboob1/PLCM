@@ -131,6 +131,102 @@ class Inventory(InventoryBase, table=True):
 
 
 
+
+class MaintenanceCase(MaintenanceCaseBase, table=True):
+    """
+    PostgreSQL table: maintenance_case
+    One row per fault event reported against a delivered project.
+    """
+    __tablename__ = "maintenance_case"
+
+    id:            Optional[int] = Field(default=None, primary_key=True)
+    case_number:   str           = Field(
+        unique=True, index=True, max_length=50,
+        description="Auto-generated. Format: MC-YYYY-NNNN"
+    )
+    project_id:    int           = Field(foreign_key="project.id")
+    reported_by:   Optional[int] = Field(default=None, foreign_key="user.id")
+
+    # Relationships
+    project:          Optional[Project]          = Relationship(back_populates="maintenance_cases")
+    reported_by_user: Optional[User]             = Relationship(back_populates="reported_cases")
+    faulty_entities:  List["FaultyEntity"]       = Relationship(back_populates="case")
+    deliveries:       List["MaintenanceDelivery"] = Relationship(back_populates="case")
+
+class MaintenanceAction(MaintenanceActionBase, table=True):
+    """
+    PostgreSQL table: maintenance_action
+    One row per action performed on a faulty entity.
+    """
+    __tablename__ = "maintenance_action"
+
+    id:               Optional[int] = Field(default=None, primary_key=True)
+    faulty_entity_id: int           = Field(foreign_key="faulty_entity.id", index=True)
+    performed_by:     Optional[int] = Field(default=None, foreign_key="user.id")
+
+    # Relationships
+    faulty_entity:    Optional[FaultyEntity] = Relationship(back_populates="actions")
+    performed_by_user: Optional[User]        = Relationship(back_populates="maintenance_actions")
+
+class MaintenanceDelivery(MaintenanceDeliveryBase, table=True):
+    """
+    PostgreSQL table: maintenance_delivery
+    One row per dispatch/delivery event against a maintenance case.
+    """
+    __tablename__ = "maintenance_delivery"
+
+    id:           Optional[int] = Field(default=None, primary_key=True)
+    case_id:      int           = Field(foreign_key="maintenance_case.id", index=True)
+    delivered_by: Optional[int] = Field(default=None, foreign_key="user.id")
+    created_at:   datetime      = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+    # Relationships
+    case:              Optional[MaintenanceCase] = Relationship(back_populates="deliveries")
+    delivered_by_user: Optional[User]           = Relationship(back_populates="deliveries")
+
+class FaultyEntity(FaultyEntityBase, table=True):
+    """
+    PostgreSQL table: faulty_entity
+    One row per affected entity within a maintenance case.+
+
+    Self-referencing via parent_faulty_entity_id to model the cascade chain.
+    SQLModel requires sa_relationship_kwargs with remote_side for self-refs.
+    """
+    __tablename__ = "faulty_entity"
+
+    id:                      Optional[int] = Field(default=None, primary_key=True)
+    case_id:                 int           = Field(foreign_key="maintenance_case.id", index=True)
+    identified_by:           Optional[int] = Field(default=None, foreign_key="user.id")
+    parent_faulty_entity_id: Optional[int] = Field(
+        default=None,
+        foreign_key="faulty_entity.id",
+        description="FK to self — links this row to its parent in the cascade chain."
+    )
+
+    # Relationships
+    case:             Optional[MaintenanceCase]  = Relationship(back_populates="faulty_entities")
+    identified_by_user: Optional[User]           = Relationship(back_populates="identified_faults")
+    actions:          List["MaintenanceAction"]  = Relationship(back_populates="faulty_entity")
+
+    # Self-referential: parent / children
+    # remote_side points to the PK column (the "one" side of one-to-many).
+    children: List["FaultyEntity"] = Relationship(
+        back_populates="parent",
+        sa_relationship_kwargs={
+            "foreign_keys":  "[FaultyEntity.parent_faulty_entity_id]",
+        }
+    )
+    parent: Optional["FaultyEntity"] = Relationship(
+        back_populates="children",
+        sa_relationship_kwargs={
+            "foreign_keys": "[FaultyEntity.parent_faulty_entity_id]",
+            "remote_side":  "[FaultyEntity.id]",
+        }
+    )
+
+
 # ===== AUTHENTICATION & AUTHORIZATION TABLES =====
 
 

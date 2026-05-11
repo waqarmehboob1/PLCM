@@ -1,6 +1,7 @@
 from typing import Optional
 from datetime import datetime, timezone
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
+from enum import Enum
 
 # Base models for all entities, defining common fields and structure
 
@@ -18,6 +19,7 @@ class UserCommon(SQLModel):
 class UserBase(UserCommon):
     password:str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class ProjectCommon(SQLModel):
     name: str
     description: Optional[str] = None
@@ -104,7 +106,6 @@ class ComponentCommon(SQLModel):
     serial_number: Optional[str] = None
     configuration_item: Optional[str] = None
 
-
 class ComponentBase(ComponentCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -141,6 +142,163 @@ class InventoryCommon(SQLModel):
 
 class InventoryBase(InventoryCommon):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))   
+
+
+
+
+
+class EntityType(str, Enum):
+    PROJECT   = "project"
+    SYSTEM    = "system"
+    SUBSYSTEM = "subsystem"
+    MODULE    = "module"
+    UNIT      = "unit"
+    COMPONENT = "component"
+    ORDER     = "order"        
+    CUSTOMER  = "customer"     
+
+class CaseStatus(str, Enum):
+    OPEN             = "open"
+    UNDER_INSPECTION = "under_inspection"
+    UNDER_REPAIR     = "under_repair"
+    RESOLVED         = "resolved"
+    CLOSED           = "closed"
+
+class FaultType(str, Enum):
+    HARDWARE             = "hardware"
+    SOFTWARE             = "software"
+    PHYSICAL_DAMAGE      = "physical_damage"
+    WEAR                 = "wear"
+    MANUFACTURING_DEFECT = "manufacturing_defect"
+    UNCLASSIFIED         = "unclassified"
+
+class FaultyEntityStatus(str, Enum):
+    IDENTIFIED       = "identified"
+    UNDER_INSPECTION = "under_inspection"
+    CONFIRMED_FAULTY = "confirmed_faulty"
+    RESOLVED         = "resolved"
+    NO_FAULT_FOUND   = "no_fault_found"
+
+class ResolutionType(str, Enum):
+    REPAIRED       = "repaired"
+    REPLACED       = "replaced"
+    NO_FAULT_FOUND = "no_fault_found"
+    DECOMMISSIONED = "decommissioned"
+
+class ActionType(str, Enum):
+    INSPECTION    = "inspection"
+    DISASSEMBLY   = "disassembly"
+    REPAIR        = "repair"
+    REPLACEMENT   = "replacement"
+    TESTING       = "testing"
+    CLEANING      = "cleaning"
+    RECALIBRATION = "recalibration"
+
+class ActionOutcome(str, Enum):
+    PASS         = "pass"
+    FAIL         = "fail"
+    INCONCLUSIVE = "inconclusive"
+    PENDING      = "pending"
+
+class DeliveryType(str, Enum):
+    INITIAL_DELIVERY    = "initial_delivery"
+    RE_DELIVERY         = "re_delivery"
+    PARTIAL_RE_DELIVERY = "partial_re_delivery"
+
+class DeliveryStatus(str, Enum):
+    PENDING               = "pending"
+    DISPATCHED            = "dispatched"
+    DELIVERED             = "delivered"
+    CONFIRMED_BY_CUSTOMER = "confirmed_by_customer"
+
+# =============================================================================
+# 1. MAINTENANCE CASE
+# =============================================================================
+# A top-level fault event opened against a delivered project.
+# One project can accumulate many cases over its lifetime.
+# =============================================================================
+
+class MaintenanceCaseCommon(SQLModel):
+    """Shared fields — no auto-generated values, no PKs, no FKs."""
+    description:      str
+    status:           CaseStatus  = CaseStatus.OPEN
+    resolution_notes: Optional[str] = None
+
+class MaintenanceCaseBase(MaintenanceCaseCommon):
+    """Adds server-side timestamps."""
+    reported_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    closed_at: Optional[datetime] = None
+
+# =============================================================================
+# 2. FAULTY ENTITY
+# =============================================================================
+# Polymorphic record pointing to any level of the hierarchy
+# (project / system / subsystem / module / unit / component).
+# parent_faulty_entity_id enables the fault cascade chain to be explicit:
+#   component FE → parent unit FE → parent module FE → ...
+# =============================================================================
+
+class FaultyEntityCommon(SQLModel):
+    """Shared fields — entity discriminator, fault classification."""
+    entity_type:       EntityType
+    entity_id:         int
+    fault_type:        FaultType          = FaultType.UNCLASSIFIED
+    fault_description: Optional[str]      = None
+    status:            FaultyEntityStatus = FaultyEntityStatus.IDENTIFIED
+    resolution_type:   Optional[ResolutionType] = None
+
+class FaultyEntityBase(FaultyEntityCommon):
+    """Adds server-side timestamps."""
+    identified_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    resolved_at: Optional[datetime] = None
+
+
+# =============================================================================
+# 3. MAINTENANCE ACTION
+# =============================================================================
+# Individual audit-log entries for every action taken on a faulty entity.
+# Includes: inspection, repair, replacement, testing, cleaning, recalibration.
+# On replacement, replacement_entity_id records the new entity that took over.
+# =============================================================================
+
+class MaintenanceActionCommon(SQLModel):
+    action_type: ActionType
+    notes:       Optional[str]          = None
+    outcome:     Optional[ActionOutcome] = None
+    # Populated only when action_type == ActionType.REPLACEMENT
+    replacement_entity_id:   Optional[int]      = None
+    replacement_entity_type: Optional[EntityType] = None
+
+class MaintenanceActionBase(MaintenanceActionCommon):
+    performed_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+# =============================================================================
+# 4. MAINTENANCE DELIVERY
+# =============================================================================
+# Records every delivery event linked to a case:
+#   - initial_delivery  → first time product goes to customer (optional use)
+#   - re_delivery       → product returned after repair / replacement
+#   - partial_re_delivery → only some entities were resolved and re-sent
+# Confirming a delivery auto-closes the parent case when status = resolved.
+# =============================================================================
+
+class MaintenanceDeliveryCommon(SQLModel):
+    delivery_type: DeliveryType   = DeliveryType.RE_DELIVERY
+    status:        DeliveryStatus = DeliveryStatus.PENDING
+    received_by:   Optional[str]  = Field(
+        default=None,
+        description="Customer contact name or signature reference."
+    )
+    notes: Optional[str] = None
+
+class MaintenanceDeliveryBase(MaintenanceDeliveryCommon):
+    delivered_at: Optional[datetime] = None
 
 # ===== AUTHENTICATION & AUTHORIZATION MODELS =====
 class PermissionCommon(SQLModel):
