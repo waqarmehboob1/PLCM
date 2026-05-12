@@ -4,8 +4,9 @@
 from typing import List, Optional
 from sqlmodel import Session, select
 from app.database import get_session
-from app.schemas.Maintennance import (AncestorNode, DescendantNode, FaultType, FaultyEntityStatus, FaultyEntity, MaintenanceCase)
-from app.models.base import( EntityType, Component, Unit, Module, Subsystem, System, Project, OrderDetail, )
+from app.schemas.Maintennance import (AncestorNode, DescendantNode, FaultType, FaultyEntityStatus)
+from app.models.tables import FaultyEntity,MaintenanceCase, Component, Unit, Module, Subsystem, System, Project, Order, Customer
+from app.models.base import( EntityType )
 from datetime import datetime, timezone
 
 
@@ -198,8 +199,8 @@ _PARENT_MAP: dict = {
     EntityType.MODULE:    (EntityType.SUBSYSTEM, Module,     "subsystem_id"),
     EntityType.SUBSYSTEM: (EntityType.SYSTEM,    Subsystem,  "system_id"),
     EntityType.SYSTEM:    (EntityType.PROJECT,   System,     "project_id"),
-    EntityType.PROJECT:   (EntityType.ORDER,    Project,     "order_id"),
-    EntityType.ORDER:     (EntityType.CUSTOMER, OrderDetail, "customer_id"),
+    EntityType.PROJECT:   (EntityType.ORDER,     Project,     "order_id"),
+    EntityType.ORDER:     (EntityType.CUSTOMER,  Order,       "customer_id"),
 }
 
 def _cascade_fault_up(
@@ -276,14 +277,14 @@ _CHILD_MAP: Dict[str, Tuple[str, Any, str]] = {
 }
 
 # Map each entity type to its SQLModel class and the attribute used as its
-# human-readable label (name, sku, serial_number, etc.).  Adjust to your schema.
+# human-readable label (name, part_number, serial_number, etc.).  Adjust to your schema.
 _ENTITY_MODEL_MAP: Dict[str, Tuple[Any, str, Optional[str]]] = {
     # (SQLModelClass, pk_attr, label_attr)
-    EntityType.COMPONENT: (Component, "id", "serial_number"),
-    EntityType.UNIT:      (Unit,      "id", "serial_number"),
-    EntityType.MODULE:    (Module,    "id", "serial_number"),
-    EntityType.SUBSYSTEM: (Subsystem, "id", "serial_number"),
-    EntityType.SYSTEM:    (System,    "id", "serial_number"),
+    EntityType.COMPONENT: (Component, "id", "part_number"),
+    EntityType.UNIT:      (Unit,      "id", "part_number"),
+    EntityType.MODULE:    (Module,    "id", "part_number"),
+    EntityType.SUBSYSTEM: (Subsystem, "id", "part_number"),
+    EntityType.SYSTEM:    (System,    "id", "part_number"),
     EntityType.PROJECT:   (Project,   "id", "name"),
     # Add ORDER and CUSTOMER if your models support them:
     # EntityType.ORDER:    (OrderDetail, "id", "reference_number"),
@@ -294,18 +295,18 @@ _ENTITY_MODEL_MAP: Dict[str, Tuple[Any, str, Optional[str]]] = {
 # Add your actual FK attribute names.
 _EXTENDED_PARENT_MAP: Dict[str, Tuple[str, Any, str]] = {
     **_PARENT_MAP,
-    # EntityType.PROJECT:  (EntityType.ORDER,    Project,     "order_detail_id"),
-    # EntityType.ORDER:    (EntityType.CUSTOMER, OrderDetail, "customer_id"),
+    EntityType.PROJECT:  (EntityType.ORDER,    Project,     "order_detail_id"),
+    EntityType.ORDER:    (EntityType.CUSTOMER, Order, "customer_id"),
 }
 
-# SR/part-number lookup:  maps entity_type → (SQLModelClass, sku_attr)
+# SR/part-number lookup:  maps entity_type → (SQLModelClass, PN_attr)
 # A single SRU must be unique within each entity type (enforced by your schema).
 _SR_SEARCH_MODELS: List[Tuple[str, Any, str]] = [
-    (EntityType.COMPONENT, Component, "sku"),
-    (EntityType.UNIT,      Unit,      "sku"),
-    (EntityType.MODULE,    Module,    "sku"),
-    (EntityType.SUBSYSTEM, Subsystem, "sku"),
-    (EntityType.SYSTEM,    System,    "sku"),
+    (EntityType.COMPONENT, Component, "part_number"),
+    (EntityType.UNIT,      Unit,      "part_number"),
+    (EntityType.MODULE,    Module,    "part_number"),
+    (EntityType.SUBSYSTEM, Subsystem, "part_number"),
+    (EntityType.SYSTEM,    System,    "part_number"),
     # Add more if Project / Order also carry part numbers.
 ]
 

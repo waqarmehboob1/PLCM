@@ -13,7 +13,7 @@ class AncestorNode(SQLModel):
     """One level in the upward ancestry chain."""
     entity_type: str
     entity_id:   int
-    label:       Optional[str] = None   # human-readable name / SKU
+    label:       Optional[str] = None   # human-readable name / PN
 
 class DescendantNode(SQLModel):
     """One entity in the downward subtree."""
@@ -24,7 +24,7 @@ class DescendantNode(SQLModel):
 
 class EntityLookupRead(SQLModel):
     """
-    Response for GET /entities/lookup-by-sku/{sku}/
+    Response for GET /entities/lookup-by-PN/{PN}/
     Returns the matched entity plus its full ancestry (up to customer)
     and every descendant entity (down to components).
     """

@@ -12,6 +12,10 @@ class User(UserBase, table=True):
     projects: List["Project"] = Relationship(back_populates="owner")
     status_changes: List["EntityStatusHistory"] = Relationship(back_populates="changed_by_user")
     maintenances: List["MaintenanceLog"] = Relationship(back_populates="performed_by_user")
+    reported_cases: List["MaintenanceCase"] = Relationship(back_populates="reported_by_user")
+    maintenance_actions: List["MaintenanceAction"] = Relationship(back_populates="performed_by_user")
+    deliveries: List["MaintenanceDelivery"] = Relationship(back_populates="delivered_by_user")
+    identified_faults: List["FaultyEntity"] = Relationship(back_populates="identified_by_user")
 
 class RolePermission(SQLModel, table=True):
     role_id: Optional[int] = Field(default=None, foreign_key="role.id", primary_key=True)
@@ -60,6 +64,7 @@ class Project(ProjectBase, table=True):
     order: Optional["Order"] = Relationship(back_populates="projects")
     status: Optional[Status] = Relationship(back_populates="projects")
     systems: List["System"] = Relationship(back_populates="project")
+    maintenance_cases: List["MaintenanceCase"] = Relationship(back_populates="project")
 
 class System(SystemBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

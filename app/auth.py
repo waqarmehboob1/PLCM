@@ -202,6 +202,36 @@ DEFAULT_PERMISSIONS = [
     {"name": "create_roles", "description": "Create roles"},
     {"name": "edit_roles", "description": "Edit roles"},
     {"name": "delete_roles", "description": "Delete roles"},
+
+    # ==================== MAINTENANCE CASES ====================
+    {"name": "view_maintenance_cases", "description": "View maintenance cases"},
+    {"name": "create_maintenance_cases", "description": "Create maintenance cases"},
+    {"name": "edit_maintenance_cases", "description": "Edit maintenance cases"},
+    {"name": "delete_maintenance_cases", "description": "Delete maintenance cases"},
+
+    # ==================== FAULTY ENTITIES ====================
+    {"name": "view_faulty_entities", "description": "View faulty entities"},
+    {"name": "create_faulty_entities", "description": "Create faulty entities"},
+    {"name": "edit_faulty_entities", "description": "Edit faulty entities"},
+    {"name": "delete_faulty_entities", "description": "Delete faulty entities"},
+    {"name": "cascade_faults", "description": "Cascade faults to child entities"},
+    {"name": "suspect_children", "description": "Mark children as suspected faulty"},
+    {"name": "confirm_faults", "description": "Confirm entity faults"},
+    {"name": "view_entity_maintenance_history", "description": "View entity maintenance history"},
+    {"name": "lookup_entities_by_part_number", "description": "Lookup entities by part number"},
+
+    # ==================== MAINTENANCE ACTIONS ====================
+    {"name": "view_maintenance_actions", "description": "View maintenance actions"},
+    {"name": "create_maintenance_actions", "description": "Create maintenance actions"},
+    {"name": "edit_maintenance_actions", "description": "Edit maintenance actions"},
+    {"name": "delete_maintenance_actions", "description": "Delete maintenance actions"},
+
+    # ==================== MAINTENANCE DELIVERIES ====================
+    {"name": "view_maintenance_deliveries", "description": "View maintenance deliveries"},
+    {"name": "create_maintenance_deliveries", "description": "Create maintenance deliveries"},
+    {"name": "edit_maintenance_deliveries", "description": "Edit maintenance deliveries"},
+    {"name": "delete_maintenance_deliveries", "description": "Delete maintenance deliveries"},
+    {"name": "confirm_maintenance_deliveries", "description": "Confirm maintenance deliveries"},
 ]
 
 DEFAULT_ROLES = [
@@ -235,7 +265,33 @@ DEFAULT_ROLES = [
             # Entities
             "view_entities", "create_entities", "edit_entities",
             # Status
-            "view_statuses", "view_status_history"
+            "view_statuses", "view_status_history",
+
+            # Maintenance Cases
+            "view_maintenance_cases",
+            "create_maintenance_cases",
+            "edit_maintenance_cases",
+
+            # Faulty Entities
+            "view_faulty_entities",
+            "create_faulty_entities",
+            "edit_faulty_entities",
+            "cascade_faults",
+            "suspect_children",
+            "confirm_faults",
+            "view_entity_maintenance_history",
+            "lookup_entities_by_part_number",
+
+            # Maintenance Actions
+            "view_maintenance_actions",
+            "create_maintenance_actions",
+            "edit_maintenance_actions",
+
+            # Maintenance Deliveries
+            "view_maintenance_deliveries",
+            "create_maintenance_deliveries",
+            "edit_maintenance_deliveries",
+            "confirm_maintenance_deliveries",
         ]
     },
     {
@@ -265,7 +321,31 @@ DEFAULT_ROLES = [
             # Status
             "view_statuses", "view_status_history",
             # Reports
-            "view_reports"
+            "view_reports",
+
+            # Maintenance Cases
+            "view_maintenance_cases",
+
+            # Faulty Entities
+            "view_faulty_entities",
+            "create_faulty_entities",
+            "edit_faulty_entities",
+            "cascade_faults",
+            "suspect_children",
+            "confirm_faults",
+            "view_entity_maintenance_history",
+            "lookup_entities_by_part_number",
+
+            # Maintenance Actions
+            "view_maintenance_actions",
+            "create_maintenance_actions",
+            "edit_maintenance_actions",
+
+            # Maintenance Deliveries
+            "view_maintenance_deliveries",
+            "create_maintenance_deliveries",
+            "edit_maintenance_deliveries",
+            "confirm_maintenance_deliveries",
         ]
     },
     {
@@ -293,7 +373,37 @@ DEFAULT_ROLES = [
             # Status
             "view_statuses", "view_status_history",
             # Reports
-            "view_reports"
+            "view_reports",
+
+            # Maintenance Cases
+            "view_maintenance_cases",
+            "create_maintenance_cases",
+            "edit_maintenance_cases",
+            "delete_maintenance_cases",
+
+            # Faulty Entities
+            "view_faulty_entities",
+            "create_faulty_entities",
+            "edit_faulty_entities",
+            "delete_faulty_entities",
+            "cascade_faults",
+            "suspect_children",
+            "confirm_faults",
+            "view_entity_maintenance_history",
+            "lookup_entities_by_part_number",
+
+            # Maintenance Actions
+            "view_maintenance_actions",
+            "create_maintenance_actions",
+            "edit_maintenance_actions",
+            "delete_maintenance_actions",
+
+            # Maintenance Deliveries
+            "view_maintenance_deliveries",
+            "create_maintenance_deliveries",
+            "edit_maintenance_deliveries",
+            "delete_maintenance_deliveries",
+            "confirm_maintenance_deliveries",
         ]
     },
     {
@@ -329,7 +439,20 @@ DEFAULT_ROLES = [
             # Status History
             "view_status_history",
             # Reports
-            "view_reports"
+            "view_reports",
+
+            # Maintenance Cases
+            "view_maintenance_cases",
+
+            # Faulty Entities
+            "view_faulty_entities",
+            "view_entity_maintenance_history",
+
+            # Maintenance Actions
+            "view_maintenance_actions",
+
+            # Maintenance Deliveries
+            "view_maintenance_deliveries",
         ]
     }
 ]
@@ -379,7 +502,7 @@ def sync_roles_and_permissions(session: Session):
     # 2. Sync roles
     existing_roles = {r.name: r for r in session.exec(select(Role)).all()}
     for role_data in DEFAULT_ROLES:
-        role = existing_roles.get(role_data["nam e"])
+        role = existing_roles.get(role_data["name"])
         if not role:
             role = Role(name=role_data["name"], description=role_data["description"])
             session.add(role)
