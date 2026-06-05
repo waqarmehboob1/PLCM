@@ -56,6 +56,10 @@ class SuspectChildrenPayload(SQLModel):
     entity_id:         int
     fault_type:        FaultType       = FaultType.UNCLASSIFIED
     fault_description: Optional[str]   = None
+    entity_name:       Optional[str]   = None  # for FE label; optional but saves a lookup
+    entity_name : Optional[str]   = None
+    serial_number : Optional[str]   = None
+    part_number : Optional[str]   = None
 
 class SuspectChildrenRead(SQLModel):
     """Response for the suspect-children endpoint."""

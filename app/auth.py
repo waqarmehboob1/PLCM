@@ -47,11 +47,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 # ==================== USER RETRIEVAL ====================
 def get_user_from_token(token: str, session: Session):
     """Get user object from JWT token."""
-    print("Getting user from token:", token)
+    # print("Getting user from token:", token)
     from app.models.tables import User
     payload = decode_token(token)
     user_id = payload.get("sub")
-    print("USER ID FROM TOKEN:", user_id)
+    # print("USER ID FROM TOKEN:", user_id)
     
     user = session.get(User, user_id)
     if not user:
@@ -64,14 +64,14 @@ def get_user_from_token(token: str, session: Session):
 # ==================== DECODE TOKEN ====================
 def decode_token(token: str) -> dict:
     """Decode and validate a JWT token."""
-    print("compiler reached in decode_token")
+    # print("compiler reached in decode_token")
 
     try:
-        print("compiler reached in Try statement")
+        # print("compiler reached in Try statement")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print("DECODED PAYLOAD:", payload)
+        # print("DECODED PAYLOAD:", payload)
         user_id = payload.get("sub")
-        print("USER ID FROM PAYLOAD:", user_id)  
+        # print("USER ID FROM PAYLOAD:", user_id)  
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -187,6 +187,10 @@ DEFAULT_PERMISSIONS = [
     {"name": "create_statuses", "description": "Create statuses"},
     {"name": "edit_statuses", "description": "Edit statuses"},
     {"name": "delete_statuses", "description": "Delete statuses"},
+    {"name": "view_hierarchy", "description": "View hierarchy entries"},
+    {"name": "create_hierarchy", "description": "Create hierarchy entries"},
+    {"name": "edit_hierarchy", "description": "Edit hierarchy entries"},
+    {"name": "delete_hierarchy", "description": "Delete hierarchy entries"},
     
     {"name": "view_status_history", "description": "View entity status history"},
     {"name": "create_status_history", "description": "Create status history"},
@@ -266,6 +270,8 @@ DEFAULT_ROLES = [
             "view_entities", "create_entities", "edit_entities",
             # Status
             "view_statuses", "view_status_history",
+            # Hierarchy
+            "view_hierarchy", "create_hierarchy", "edit_hierarchy"
 
             # Maintenance Cases
             "view_maintenance_cases",
@@ -438,6 +444,8 @@ DEFAULT_ROLES = [
             "view_statuses",
             # Status History
             "view_status_history",
+            # Hierarchy
+            "view_hierarchy",
             # Reports
             "view_reports",
 

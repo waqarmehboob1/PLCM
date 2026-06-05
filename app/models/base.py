@@ -48,6 +48,15 @@ class StatusCommon(SQLModel):
 class StatusBase(StatusCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class HierarchyCommon(SQLModel):
+    name: str
+    description: Optional[str] = None
+    hierarchy_type: str
+    parent_id: Optional[int] = None
+
+class HierarchyBase(HierarchyCommon):
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class OrderCommon(SQLModel):
     customer_id: int
     order_number: Optional[str] = None
@@ -171,6 +180,8 @@ class FaultType(str, Enum):
     WEAR                 = "wear"
     MANUFACTURING_DEFECT = "manufacturing_defect"
     UNCLASSIFIED         = "unclassified"
+    SUSPECTED            = "suspected"
+
 
 class FaultyEntityStatus(str, Enum):
     IDENTIFIED       = "identified"
@@ -178,6 +189,8 @@ class FaultyEntityStatus(str, Enum):
     CONFIRMED_FAULTY = "confirmed_faulty"
     RESOLVED         = "resolved"
     NO_FAULT_FOUND   = "no_fault_found"
+    SUSPECTED     = "suspected"
+
 
 class ResolutionType(str, Enum):
     REPAIRED       = "repaired"
@@ -223,12 +236,13 @@ class MaintenanceCaseCommon(SQLModel):
     description:      str
     status:           CaseStatus  = CaseStatus.OPEN
     resolution_notes: Optional[str] = None
+    entity_id: Optional[int] = None
+    entity_type: Optional[str] = None
+    part_number: Optional[str] = None
 
 class MaintenanceCaseBase(MaintenanceCaseCommon):
     """Adds server-side timestamps."""
-    reported_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    reported_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     closed_at: Optional[datetime] = None
 
 # =============================================================================
@@ -251,10 +265,16 @@ class FaultyEntityCommon(SQLModel):
 
 class FaultyEntityBase(FaultyEntityCommon):
     """Adds server-side timestamps."""
-    identified_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    identified_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     resolved_at: Optional[datetime] = None
+    entity_name: Optional[str] = None
+    part_number: Optional[str] = None
+    serial_number: Optional[str] = None
+    parent_entity_name: Optional[str] = None
+    confirmed_at: Optional[str] = None
+    investigation_notes: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 # =============================================================================

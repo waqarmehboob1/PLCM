@@ -295,7 +295,7 @@ _ENTITY_MODEL_MAP: Dict[str, Tuple[Any, str, Optional[str]]] = {
 # Add your actual FK attribute names.
 _EXTENDED_PARENT_MAP: Dict[str, Tuple[str, Any, str]] = {
     **_PARENT_MAP,
-    EntityType.PROJECT:  (EntityType.ORDER,    Project,     "order_detail_id"),
+    EntityType.PROJECT:  (EntityType.ORDER,    Project,     "order_id"),
     EntityType.ORDER:    (EntityType.CUSTOMER, Order, "customer_id"),
 }
 
@@ -322,11 +322,19 @@ def _generate_case_number(session: Session) -> str:
     """
     year = datetime.now(timezone.utc).year
     prefix = f"MC-{year}-"
-    existing = session.exec(
-        select(MaintenanceCase).where(
-            MaintenanceCase.case_number.startswith(prefix)
-        )
-    ).all()
-    return f"{prefix}{str(len(existing) + 1).zfill(4)}"
+
+    latest_case = session.exec(select(MaintenanceCase).order_by(MaintenanceCase.id.desc())).first()
+    if latest_case:
+        next_id = latest_case.id + 1
+
+    case_number = f"MC-{year}-{next_id:04d}"
+
+    # existing = session.exec(
+    #     select(MaintenanceCase).where(
+    #         MaintenanceCase.case_number.startswith(prefix)
+    #     )
+    # ).all()
+    # return f"{prefix}{str(len(existing) + 1).zfill(4)}"
+    return case_number
 
 # # ====================================

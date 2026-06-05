@@ -1,6 +1,7 @@
 from .base import *
 from typing import List, Optional
 from sqlmodel import Field, Relationship
+import sqlalchemy as sa
 
 class UserRole(SQLModel, table=True):
     user_id: Optional[int] = Field(default=None, foreign_key="user.id", primary_key=True)
@@ -46,6 +47,10 @@ class Status(StatusBase, table=True):
     components: List["Component"] = Relationship(back_populates="status")
     entities: List["Entity"] = Relationship(back_populates="status")
     history_records: List["EntityStatusHistory"] = Relationship(back_populates="status")
+
+class Hierarchy(HierarchyBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    parent_id: Optional[int] = Field(default=None, foreign_key="hierarchy.id")
 
 class Order(OrderBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -134,28 +139,35 @@ class Inventory(InventoryBase, table=True):
     component_id: int = Field(foreign_key="component.id")
     component: Optional[Component] = Relationship(back_populates="inventory_items")
 
-
-
-
 class MaintenanceCase(MaintenanceCaseBase, table=True):
     """
     PostgreSQL table: maintenance_case
     One row per fault event reported against a delivered project.
-    """
+    """ 
     __tablename__ = "maintenance_case"
 
     id:            Optional[int] = Field(default=None, primary_key=True)
-    case_number:   str           = Field(
-        unique=True, index=True, max_length=50,
-        description="Auto-generated. Format: MC-YYYY-NNNN"
-    )
+    case_number:   str           = Field(unique=False, index=True, max_length=50, description="Auto-generated. Format: MC-YYYY-NNNN")
     project_id:    int           = Field(foreign_key="project.id")
     reported_by:   Optional[int] = Field(default=None, foreign_key="user.id")
+    status:        CaseStatus    = Field(
+        sa_column=sa.Column(
+            sa.Enum(
+                CaseStatus,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="casestatus",
+                native_enum=True,
+            ),
+            nullable=False,
+            server_default=sa.text("'open'::casestatus"),
+        ),
+        default=CaseStatus.OPEN,
+    )
 
     # Relationships
-    project:          Optional[Project]          = Relationship(back_populates="maintenance_cases")
-    reported_by_user: Optional[User]             = Relationship(back_populates="reported_cases")
-    faulty_entities:  List["FaultyEntity"]       = Relationship(back_populates="case")
+    project:          Optional[Project]           = Relationship(back_populates="maintenance_cases")
+    reported_by_user: Optional[User]              = Relationship(back_populates="reported_cases")
+    faulty_entities:  List["FaultyEntity"]        = Relationship(back_populates="case")
     deliveries:       List["MaintenanceDelivery"] = Relationship(back_populates="case")
 
 class MaintenanceAction(MaintenanceActionBase, table=True):
@@ -168,6 +180,41 @@ class MaintenanceAction(MaintenanceActionBase, table=True):
     id:               Optional[int] = Field(default=None, primary_key=True)
     faulty_entity_id: int           = Field(foreign_key="faulty_entity.id", index=True)
     performed_by:     Optional[int] = Field(default=None, foreign_key="user.id")
+    action_type:      ActionType    = Field(
+        sa_column=sa.Column(
+            sa.Enum(
+                ActionType,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="actiontype",
+                native_enum=True,
+            ),
+            nullable=False,
+        ),
+    )
+    outcome:          Optional[ActionOutcome] = Field(
+        sa_column=sa.Column(
+            sa.Enum(
+                ActionOutcome,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="actionoutcome",
+                native_enum=True,
+            ),
+            nullable=True,
+        ),
+        default=None,
+    )
+    replacement_entity_type: Optional[EntityType] = Field(
+        sa_column=sa.Column(
+            sa.Enum(
+                EntityType,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="entitytype",
+                native_enum=True,
+            ),
+            nullable=True,
+        ),
+        default=None,
+    )
 
     # Relationships
     faulty_entity:    Optional[FaultyEntity] = Relationship(back_populates="actions")
@@ -183,6 +230,32 @@ class MaintenanceDelivery(MaintenanceDeliveryBase, table=True):
     id:           Optional[int] = Field(default=None, primary_key=True)
     case_id:      int           = Field(foreign_key="maintenance_case.id", index=True)
     delivered_by: Optional[int] = Field(default=None, foreign_key="user.id")
+    delivery_type: DeliveryType = Field(
+        sa_column=sa.Column(
+            sa.Enum(
+                DeliveryType,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="deliverytype",
+                native_enum=True,
+            ),
+            nullable=False,
+            server_default=sa.text("'re_delivery'::deliverytype"),
+        ),
+        default=DeliveryType.RE_DELIVERY,
+    )
+    status: DeliveryStatus = Field(
+        sa_column=sa.Column(
+            sa.Enum(
+                DeliveryStatus,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="deliverystatus",
+                native_enum=True,
+            ),
+            nullable=False,
+            server_default=sa.text("'pending'::deliverystatus"),
+        ),
+        default=DeliveryStatus.PENDING,
+    )
     created_at:   datetime      = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
@@ -201,13 +274,47 @@ class FaultyEntity(FaultyEntityBase, table=True):
     """
     __tablename__ = "faulty_entity"
 
-    id:                      Optional[int] = Field(default=None, primary_key=True)
-    case_id:                 int           = Field(foreign_key="maintenance_case.id", index=True)
-    identified_by:           Optional[int] = Field(default=None, foreign_key="user.id")
+    id: Optional[int]                      = Field(default=None, primary_key=True)
+    status: FaultyEntityStatus             = Field(
+        default=FaultyEntityStatus.IDENTIFIED,
+        sa_column=sa.Column(
+            sa.Enum(
+                FaultyEntityStatus,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="faultyentitystatus",
+                native_enum=True,
+            ),
+            nullable=False,
+        ),
+    )
+    case_id:int                            = Field(foreign_key="maintenance_case.id", index=True)
+    identified_by:Optional[int]            = Field(default=None, foreign_key="user.id")
     parent_faulty_entity_id: Optional[int] = Field(
         default=None,
         foreign_key="faulty_entity.id",
         description="FK to self — links this row to its parent in the cascade chain."
+    )
+    entity_type: EntityType = Field(
+        sa_column=sa.Column(
+            sa.Enum(
+                EntityType,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="entitytype",
+                native_enum=True,
+            ),
+            nullable=False,
+        ),
+    )
+    fault_type: FaultType = Field(
+        sa_column=sa.Column(
+            sa.Enum(
+                FaultType,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="faulttype",
+                native_enum=True,
+            ),
+            nullable=False,
+        ),
     )
 
     # Relationships

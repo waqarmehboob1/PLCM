@@ -28,7 +28,7 @@ oauth2_scheme:OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="/api/auth/lo
 
 def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> User:
     """Dependency to get current authenticated user from token."""
-    print("TOKEN RECEIVED:", token)
+    # print("TOKEN RECEIVED:", token)
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

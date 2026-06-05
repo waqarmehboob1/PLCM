@@ -33,8 +33,7 @@ from sqlmodel import Session, select
 router = APIRouter()
 
 
-@router.post(
-    "/maintenance-cases/",
+@router.post("/maintenance-cases/",
     response_model=MaintenanceCaseRead,
     status_code=201,
     tags=["maintenance-cases"],
@@ -42,7 +41,7 @@ router = APIRouter()
 def create_maintenance_case(
     payload:      MaintenanceCaseCreate,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("create_maintenance_case")),
+    current_user: User    = Depends(require_permission("create_maintenance_cases")),
 ):
     """
     Open a new maintenance case against a delivered project.
@@ -68,6 +67,7 @@ def create_maintenance_case(
         case_number=_generate_case_number(session),
         **data
     )
+    print("-----------------------------------------------------------case Created:---------------------------------------------------------", case)
     session.add(case)
     session.commit()
     session.refresh(case)
@@ -84,7 +84,7 @@ def list_maintenance_cases(
     skip:         int = 0,
     limit:        int = 100,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("view_maintenance_case")),
+    current_user: User    = Depends(require_permission("view_maintenance_cases")),
 ):
     """
     List cases. Filter by project_id and/or status.
@@ -108,7 +108,7 @@ def list_maintenance_cases(
 def get_maintenance_case(
     case_id:      int,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("view_maintenance_case")),
+    current_user: User    = Depends(require_permission("view_maintenance_cases")),
 ):
     """
     Retrieve a single case with all faulty entities and deliveries nested.
@@ -137,7 +137,7 @@ def update_maintenance_case(
     case_id:      int,
     payload:      MaintenanceCaseUpdate,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("edit_maintenance_case")),
+    current_user: User    = Depends(require_permission("edit_maintenance_cases")),
 ):
     """
     Update case status and/or resolution notes.
@@ -165,7 +165,7 @@ def update_maintenance_case(
 def delete_maintenance_case(
     case_id:      int,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("delete_maintenance_case")),
+    current_user: User    = Depends(require_permission("delete_maintenance_cases")),
 ):
     """
     Hard delete. Only permitted on open cases with no associated actions.
@@ -219,6 +219,7 @@ def add_faulty_entity(
     data = payload.model_dump()
     data["identified_by"] = data.get("identified_by") or current_user.id
     fe = FaultyEntity(case_id=case_id, **data)
+    print("Adding Faulty Entity on Backend", fe)
     session.add(fe)
     session.commit()
     session.refresh(fe)
@@ -412,7 +413,7 @@ def create_maintenance_action(
     fe_id:        int,
     payload:      MaintenanceActionCreate,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("create_maintenance_action")),
+    current_user: User    = Depends(require_permission("create_maintenance_actions")),
 ):
     """
     Log an action (inspection, repair, replacement, testing, etc.)
@@ -465,7 +466,7 @@ def list_maintenance_actions(
     skip:         int = 0,
     limit:        int = 100,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("view_maintenance_action")),
+    current_user: User    = Depends(require_permission("view_maintenance_actions")),
 ):
     """List all actions recorded against a faulty entity."""
     return session.exec(
@@ -483,7 +484,7 @@ def list_maintenance_actions(
 def get_maintenance_action(
     action_id:    int,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("view_maintenance_action")),
+    current_user: User    = Depends(require_permission("view_maintenance_actions")),
 ):
     action = session.get(MaintenanceAction, action_id)
     if not action:
@@ -499,7 +500,7 @@ def update_maintenance_action(
     action_id:    int,
     payload:      MaintenanceActionUpdate,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("edit_maintenance_action")),
+    current_user: User    = Depends(require_permission("edit_maintenance_actions")),
 ):
     """Update notes or outcome of a recorded action."""
     action = session.get(MaintenanceAction, action_id)
@@ -519,7 +520,7 @@ def update_maintenance_action(
 def delete_maintenance_action(
     action_id:    int,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("delete_maintenance_action")),
+    current_user: User    = Depends(require_permission("delete_maintenance_actions")),
 ):
     action = session.get(MaintenanceAction, action_id)
     if not action:
@@ -542,7 +543,7 @@ def create_maintenance_delivery(
     case_id:      int,
     payload:      MaintenanceDeliveryCreate,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("create_maintenance_delivery")),
+    current_user: User    = Depends(require_permission("create_maintenance_deliveries")),
 ):
     """
     Record a re-delivery of the repaired product to the customer.
@@ -582,7 +583,7 @@ def create_maintenance_delivery(
 def list_maintenance_deliveries(
     case_id:      int,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("view_maintenance_delivery")),
+    current_user: User    = Depends(require_permission("view_maintenance_deliveries")),
 ):
     """List all delivery records for a case (full re-delivery history)."""
     return session.exec(
@@ -599,7 +600,7 @@ def list_maintenance_deliveries(
 def get_maintenance_delivery(
     delivery_id:  int,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("view_maintenance_delivery")),
+    current_user: User    = Depends(require_permission("view_maintenance_deliveries")),
 ):
     delivery = session.get(MaintenanceDelivery, delivery_id)
     if not delivery:
@@ -615,7 +616,7 @@ def update_maintenance_delivery(
     delivery_id:  int,
     payload:      MaintenanceDeliveryUpdate,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("edit_maintenance_delivery")),
+    current_user: User    = Depends(require_permission("edit_maintenance_deliveries")),
 ):
     """Update delivery status, received_by, or notes."""
     delivery = session.get(MaintenanceDelivery, delivery_id)
@@ -637,7 +638,7 @@ def confirm_maintenance_delivery(
     delivery_id:  int,
     received_by:  str,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("edit_maintenance_delivery")),
+    current_user: User    = Depends(require_permission("edit_maintenance_deliveries")),
 ):
     """
     Customer confirms receipt of the repaired product.
@@ -672,7 +673,7 @@ def confirm_maintenance_delivery(
 def delete_maintenance_delivery(
     delivery_id:  int,
     session:      Session = Depends(get_session),
-    current_user: User    = Depends(require_permission("delete_maintenance_delivery")),
+    current_user: User    = Depends(require_permission("delete_maintenance_deliveries")),
 ):
     delivery = session.get(MaintenanceDelivery, delivery_id)
     if not delivery:
@@ -736,9 +737,9 @@ def lookup_entity_by_PN(
     matched_label: Optional[str] = None
 
 
-    print (_SR_SEARCH_MODELS)
+    # print (_SR_SEARCH_MODELS)
     for entity_type, model_cls, PN_attr in _SR_SEARCH_MODELS:
-        print(entity_type, model_cls, PN_attr)
+        # print(entity_type, model_cls, PN_attr)
         row = session.exec(
             select(model_cls).where(getattr(model_cls, PN_attr) == part_number)
         ).first()
@@ -835,6 +836,7 @@ def suspect_children(
           "message": "8 descendant entities marked as under_inspection."
         }
     """
+    print("Getting data from Backend", payload)
     case = session.get(MaintenanceCase, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Maintenance case not found")
@@ -842,23 +844,32 @@ def suspect_children(
     # Step 1 — Create the confirmed-faulty FE for the reported entity
     parent_fe = FaultyEntity(
         case_id=case_id,
-        entity_type=payload.entity_type,
+        entity_type=payload.entity_type.value,
         entity_id=payload.entity_id,
         fault_type=payload.fault_type,
         fault_description=payload.fault_description,
         status=FaultyEntityStatus.CONFIRMED_FAULTY,
         identified_by=current_user.id,
         parent_faulty_entity_id=None,
-    )
+        entity_name=payload.entity_name,
+        serial_number=payload.serial_number,
+        part_number=payload.part_number,
+        )
+    print("@@@@@@@@@@@@@@@@@///////////Suspecting parent on Backend", parent_fe)
+
     session.add(parent_fe)
     session.flush()       # get parent_fe.id
 
     # Step 2 — Collect all descendants
-    descendants = _collect_descendants(session, payload.entity_type, payload.entity_id)
+    descendants = _collect_descendants(session, payload.entity_type.value, payload.entity_id)
+    print("@@@@@@@@@@@@@@@@@///////////Suspecting decendants", descendants)
 
     if not descendants:
+        print("@@@@@@@@@@@@@@@@@///////////No decendant")
         session.commit()
         session.refresh(parent_fe)
+        print("@@@@@@@@@@@@@@@@@///////////No decendant")
+
         return SuspectChildrenRead(
             parent_faulty_entity_id=parent_fe.id,
             suspect_entities_created=[],

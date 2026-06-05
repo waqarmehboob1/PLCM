@@ -23,14 +23,14 @@ def create_statuses(
     session: Session = Depends(get_session),
     current_user: User = Depends(require_permission("create_statuses"))
 ):
-    print(current_user)
+    # print(current_user)
     db_statuses = [Status(**status.model_dump()) for status in statuses]
     
     
     try:
         session.add_all(db_statuses)
         session.commit()
-        print(f"Batch created")
+        # print(f"Batch created")
     except Exception:
         session.rollback()
         raise
