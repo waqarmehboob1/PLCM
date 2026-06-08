@@ -732,10 +732,12 @@ def lookup_entity_by_PN(
 
     ERROR 404: SKU not found in any entity table.
     """
-    matched_type: Optional[str] = None
+    matched_type: Optional[str] = None   # May be entity name
     matched_id:   Optional[int] = None
     matched_label: Optional[str] = None
-
+    serialNumber : Optional[str] = None
+    PartNumber : Optional[str] = None
+    
 
     # print (_SR_SEARCH_MODELS)
     for entity_type, model_cls, PN_attr in _SR_SEARCH_MODELS:
@@ -746,7 +748,11 @@ def lookup_entity_by_PN(
         if row:
             matched_type  = entity_type
             matched_id    = row.id
-            matched_label = str(getattr(row, PN_attr, part_number))
+            serialNumber = str(getattr(row, "serial_number", part_number))
+            PartNumber = str(getattr(row, "part_number", part_number))
+            matched_label = str(getattr(row, "name", part_number))
+            print("partNumber", PartNumber)
+            print("serialNumber", serialNumber)
             break
 
     if not matched_type or matched_id is None:
@@ -757,22 +763,24 @@ def lookup_entity_by_PN(
 
     # Walk up to customer
     ancestors = _resolve_ancestors(session, matched_type, matched_id)
+    # print("@@@@@@@@@@@@@@@@@///////////Ancestors: ", ancestors)
 
     # Walk down to every leaf
     descendants = _collect_descendants(session, matched_type, matched_id)
+    # print("@@@@@@@@@@@@@@@@@///////////Descendants: ", descendants)
 
     # Extract convenience fields from ancestors
     project_id = project_name = order_id = order_ref = customer_id = customer_name = None
     for anc in ancestors:
         if anc.entity_type == EntityType.PROJECT:
             project_id   = anc.entity_id
-            project_name = anc.label
+            project_name = anc.entity_name
         elif anc.entity_type == "order":          # EntityType.ORDER if defined
             order_id  = anc.entity_id
-            order_ref = anc.label
+            order_ref = anc.entity_name
         elif anc.entity_type == "customer":       # EntityType.CUSTOMER if defined
             customer_id   = anc.entity_id
-            customer_name = anc.label
+            customer_name = anc.entity_name
 
     return EntityLookupRead(
         matched_entity_type=matched_type,
@@ -786,7 +794,8 @@ def lookup_entity_by_PN(
         order_ref=order_ref,
         customer_id=customer_id,
         customer_name=customer_name,
-    )
+        matched_entity_serialNumber = serialNumber,
+        matched_entity_PartNumber = PartNumber)
 
 # ── E2. Suspect all children of a mid-hierarchy fault ─────────────────────────
 
@@ -854,6 +863,7 @@ def suspect_children(
         entity_name=payload.entity_name,
         serial_number=payload.serial_number,
         part_number=payload.part_number,
+
         )
     print("@@@@@@@@@@@@@@@@@///////////Suspecting parent on Backend", parent_fe)
 
@@ -865,10 +875,8 @@ def suspect_children(
     print("@@@@@@@@@@@@@@@@@///////////Suspecting decendants", descendants)
 
     if not descendants:
-        print("@@@@@@@@@@@@@@@@@///////////No decendant")
         session.commit()
         session.refresh(parent_fe)
-        print("@@@@@@@@@@@@@@@@@///////////No decendant")
 
         return SuspectChildrenRead(
             parent_faulty_entity_id=parent_fe.id,

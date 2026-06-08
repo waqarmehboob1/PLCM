@@ -11,16 +11,22 @@ from datetime import datetime
 
 class AncestorNode(SQLModel):
     """One level in the upward ancestry chain."""
-    entity_type: str
-    entity_id:   int
-    label:       Optional[str] = None   # human-readable name / PN
+    entity_type:             str # like Project, System, Subsystem, Module, Unit, Component
+    entity_id:               int
+    entity_name:             Optional[str]= None   # like SDLS1 (System), AOCS (subsystem), or TMTC (Module) or FPGA Card (unit), Rectifier (component)
+    entity_PartNumber:       Optional[str] = None   # human-readable name / PN
+    entity_SerialNumber:     Optional[str] = None
 
 class DescendantNode(SQLModel):
     """One entity in the downward subtree."""
-    entity_type: str
-    entity_id:   int
-    label:       Optional[str] = None
-    depth:       int = 0                # 0 = the entity itself, 1 = direct child, …
+    entity_type:             str # like Project, System, Subsystem, Module, Unit, Component
+    entity_id:               int
+    entity_name:             Optional[str] = None   # like SDLS1 (System), AOCS (subsystem), or TMTC (Module) or FPGA Card (unit), Rectifier (component)
+    entity_PartNumber:       Optional[str] = None   # human-readable name / PN
+    entity_SerialNumber:     Optional[str] = None
+    parent_ID:               Optional[int] = None   # immediate parent in the hierarchy (None for the matched entity itself)
+    parent_name:             Optional[str] = None   # for FE label; optional but saves a lookup
+    depth:                   int = 0                # 0 = the entity itself, 1 = direct child, …
 
 class EntityLookupRead(SQLModel):
     """
@@ -31,6 +37,9 @@ class EntityLookupRead(SQLModel):
     matched_entity_type: str
     matched_entity_id:   int
     matched_label:       Optional[str] = None
+    matched_entity_serialNumber : Optional[str] = None
+    matched_entity_PartNumber : Optional[str] = None
+
 
     # Upward chain — ordered from the matched entity to Customer
     ancestors: List[AncestorNode] = []
@@ -46,6 +55,8 @@ class EntityLookupRead(SQLModel):
     customer_id:   Optional[int] = None
     customer_name: Optional[str] = None
 
+
+
 class SuspectChildrenPayload(SQLModel):
     """
     POST /maintenance-cases/{case_id}/suspect-children/
@@ -57,9 +68,8 @@ class SuspectChildrenPayload(SQLModel):
     fault_type:        FaultType       = FaultType.UNCLASSIFIED
     fault_description: Optional[str]   = None
     entity_name:       Optional[str]   = None  # for FE label; optional but saves a lookup
-    entity_name : Optional[str]   = None
-    serial_number : Optional[str]   = None
-    part_number : Optional[str]   = None
+    serial_number:     Optional[str]   = None
+    part_number:       Optional[str]   = None
 
 class SuspectChildrenRead(SQLModel):
     """Response for the suspect-children endpoint."""
