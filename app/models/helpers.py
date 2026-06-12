@@ -142,6 +142,9 @@ def _create_suspect_fes(
             status=FaultyEntityStatus.UNDER_INSPECTION,
             parent_faulty_entity_id=parent_faulty_entity_id,
             identified_by=identified_by,
+            part_number = desc.entity_PartNumber,
+            serial_number= desc.entity_SerialNumber,
+            entity_name= desc.entity_name
         )
         session.add(fe)
         created.append(fe)

@@ -216,6 +216,7 @@ def add_faulty_entity(
     case = session.get(MaintenanceCase, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Maintenance case not found")
+    print("Payload Data:  ", payload)
     data = payload.model_dump()
     data["identified_by"] = data.get("identified_by") or current_user.id
     fe = FaultyEntity(case_id=case_id, **data)
@@ -767,7 +768,7 @@ def lookup_entity_by_PN(
 
     # Walk down to every leaf
     descendants = _collect_descendants(session, matched_type, matched_id)
-    # print("@@@@@@@@@@@@@@@@@///////////Descendants: ", descendants)
+    print("-------------------------///////////Descendants: ----------------------------------- ", descendants)
 
     # Extract convenience fields from ancestors
     project_id = project_name = order_id = order_ref = customer_id = customer_name = None
@@ -865,14 +866,14 @@ def suspect_children(
         part_number=payload.part_number,
 
         )
-    print("@@@@@@@@@@@@@@@@@///////////Suspecting parent on Backend", parent_fe)
+    # print("@@@@@@@@@@@@@@@@@///////////Suspecting parent on Backend", parent_fe)
 
     session.add(parent_fe)
     session.flush()       # get parent_fe.id
 
     # Step 2 — Collect all descendants
     descendants = _collect_descendants(session, payload.entity_type.value, payload.entity_id)
-    print("@@@@@@@@@@@@@@@@@///////////Suspecting decendants", descendants)
+    # print("@@@@@@@@@@@@@@@@@///////////Suspecting decendants", descendants)
 
     if not descendants:
         session.commit()
@@ -894,6 +895,7 @@ def suspect_children(
         parent_fe.id,
         current_user.id,
     )
+    print("@@@@@@@@@@@@@@@@@///////////Suspecting Child on Backend", suspects)
     session.commit()
     session.refresh(parent_fe)
     for s in suspects:
