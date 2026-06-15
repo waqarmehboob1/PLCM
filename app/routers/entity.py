@@ -5,6 +5,8 @@ from app.database import get_session
 from app.models.tables import (Entity, User)
 from app.schemas import schemas
 from app.routers.auth import require_permission
+from app.models.base import EntityType
+from app.models.helpers import _PARENT_MAP
 
 router = APIRouter()
 
@@ -70,3 +72,31 @@ def list_entity_maintenance_logs(entity_id: int, session: Session = Depends(get_
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")
     return entity.maintenance_logs
+
+
+
+
+@router.get("/part-numbers/", response_model=list[str])
+def get_part_numbers(session: Session = Depends(get_session)):
+    part_numbers = set()
+    print("Compiler reached here")
+    entity_models = list(EntityType)
+    print("Compiler reached 2",entity_models)
+    
+    for entity_type, (_, model, _) in _PARENT_MAP.items():
+
+        if entity_type in {
+            EntityType.PROJECT,
+            EntityType.ORDER,
+            EntityType.CUSTOMER,
+        }:
+            continue
+
+        rows = session.exec(
+            select(model.part_number)
+            .where(model.part_number.is_not(None))
+        ).all()
+        
+        part_numbers.update(rows)
+        
+    return sorted(part_numbers)

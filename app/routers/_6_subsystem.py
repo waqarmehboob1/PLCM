@@ -20,6 +20,7 @@ def create_subsystem(subsystem: schemas.SubsystemCreate, session: Session = Depe
     db_subsystem = Subsystem(**subsystem.model_dump())
     session.add(db_subsystem)
     session.flush()
+    db_subsystem.serial_number = "Subsys-"  + str(db_subsystem.serial_number)+ "-"+ str(db_subsystem.id)
 
 # Create
 #    1.  Entity status

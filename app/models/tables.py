@@ -1,7 +1,9 @@
 from .base import *
 from typing import List, Optional
-from sqlmodel import Field, Relationship
+from sqlmodel import Column, Field, Relationship
 import sqlalchemy as sa
+from enum import Enum
+from sqlalchemy import Enum as SQLEnum
 
 class UserRole(SQLModel, table=True):
     user_id: Optional[int] = Field(default=None, foreign_key="user.id", primary_key=True)
@@ -169,7 +171,7 @@ class MaintenanceCase(MaintenanceCaseBase, table=True):
     reported_by_user: Optional[User]              = Relationship(back_populates="reported_cases")
     faulty_entities:  List["FaultyEntity"]        = Relationship(back_populates="case")
     deliveries:       List["MaintenanceDelivery"] = Relationship(back_populates="case")
-
+    
 class MaintenanceAction(MaintenanceActionBase, table=True):
     """
     PostgreSQL table: maintenance_action
@@ -294,6 +296,34 @@ class FaultyEntity(FaultyEntityBase, table=True):
         foreign_key="faulty_entity.id",
         description="FK to self — links this row to its parent in the cascade chain."
     )
+    parent_entity_id: Optional[int] = Field(default=None)
+    parent_entity_type: Optional[EntityType] = Field(
+        default=None,
+        sa_column=sa.Column(
+            sa.Enum(
+                EntityType,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="entitytype",
+                native_enum=True,
+            ),
+            nullable=True,
+        ),
+    )
+    hierarchy_parent_entity_id: Optional[int] = Field(default=None)
+    hierarchy_parent_entity_type: Optional[EntityType] = Field(
+        default=None,
+        sa_column=sa.Column(
+            sa.Enum(
+                EntityType,
+                values_callable=lambda entries: [entry.value for entry in entries],
+                name="entitytype",
+                native_enum=True,
+            ),
+            nullable=True,
+        ),
+    )
+
+    depth: Optional[int] = Field(default=None)
     entity_type: EntityType = Field(
         sa_column=sa.Column(
             sa.Enum(

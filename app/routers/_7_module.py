@@ -20,6 +20,8 @@ def create_module(module: schemas.ModuleCreate, session: Session = Depends(get_s
     db_module = Module(**module.model_dump())
     session.add(db_module)
     session.flush()
+    db_module.serial_number = "Mod-" +  str(db_module.serial_number)+ "-"+ str(db_module.id)
+
 
 # Create
 #    1.  Entity status

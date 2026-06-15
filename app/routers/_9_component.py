@@ -20,6 +20,7 @@ def create_component(component: schemas.ComponentCreate, session: Session = Depe
     db_component = Component(**component.model_dump())
     session.add(db_component)
     session.flush()
+    db_component.serial_number = "Comp-" + str(db_component.serial_number)  + "-"+ str(db_component.id)
 
 # Create
 #    1.  Entity status

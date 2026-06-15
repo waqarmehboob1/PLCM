@@ -1,6 +1,7 @@
 from typing import Optional, List
 from datetime import datetime
 from sqlmodel import SQLModel
+from pydantic import ConfigDict
 from app.models.base import (
     UserBase,
     CustomerBase,

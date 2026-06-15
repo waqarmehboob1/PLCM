@@ -20,6 +20,7 @@ def create_system(system: schemas.SystemCreate, session: Session = Depends(get_s
     db_system = System(**system.dict())
     session.add(db_system)
     session.flush()
+    db_system.serial_number = "Sys-"  +  str(db_system.serial_number) + "-" + str(db_system.id)
 
 # Create
 #    1.  Entity status

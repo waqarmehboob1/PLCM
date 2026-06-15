@@ -5,7 +5,7 @@
 # =============================================================================
 
 from __future__ import annotations
-
+from sqlalchemy import update
 from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional
@@ -26,7 +26,7 @@ from app.schemas.Maintennance import EntityLookupRead
 from app.models.base import EntityType, ActionType
 from app.schemas.Maintennance import *
 from app.models.helpers import _generate_case_number, _cascade_fault_up,_SR_SEARCH_MODELS, _collect_descendants,_create_suspect_fes, _clear_healthy_fes, _resolve_ancestors
-from app.models.tables import MaintenanceCase, FaultyEntity, MaintenanceAction, MaintenanceDelivery
+from app.models.tables import MaintenanceCase, FaultyEntity, MaintenanceAction, MaintenanceDelivery, Project
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
@@ -44,6 +44,7 @@ def create_maintenance_case(
     current_user: User    = Depends(require_permission("create_maintenance_cases")),
 ):
     """
+
     Open a new maintenance case against a delivered project.
     Case number is auto-generated (MC-YYYY-NNNN).
 
@@ -61,12 +62,11 @@ def create_maintenance_case(
           "faulty_entities": [], "deliveries": []
         }
     """
+    project= session.get(Project, payload.project_id)
+    payload.project_name = project.name if project else "Undefined"
     data = payload.model_dump()
     data["reported_by"] = data.get("reported_by") or current_user.id
-    case = MaintenanceCase(
-        case_number=_generate_case_number(session),
-        **data
-    )
+    case = MaintenanceCase(case_number=_generate_case_number(session),**data)
     print("-----------------------------------------------------------case Created:---------------------------------------------------------", case)
     session.add(case)
     session.commit()
@@ -124,9 +124,18 @@ def get_maintenance_case(
         }
     """
     case = session.get(MaintenanceCase, case_id)
-    if not case:
+    project_name: str = session.get(Project, case.project_id)
+    user_name: str = session.get(User, case.reported_by)
+    print("-------------------------Get Maintainance Case by ID", case)
+
+    case_read = MaintenanceCaseRead.model_validate(case)
+
+    case_read.project_name = project_name.name
+    case_read.reported_by_user = user_name.username
+
+    if not case_read:
         raise HTTPException(status_code=404, detail="Maintenance case not found")
-    return case
+    return case_read
 
 @router.put(
     "/maintenance-cases/{case_id}/",
@@ -225,7 +234,7 @@ def add_faulty_entity(
     session.commit()
     session.refresh(fe)
     return fe
-
+ 
 @router.post(
     "/maintenance-cases/{case_id}/cascade-fault/",
     response_model=FaultyEntityCascadeRead,
@@ -337,6 +346,8 @@ def update_faulty_entity(
     REQUEST:  { "status": "resolved", "resolution_type": "repaired" }
     RESPONSE: Updated FaultyEntityRead
     """
+    
+    print("payload ", payload)
     fe = session.get(FaultyEntity, fe_id)
     if not fe:
         raise HTTPException(status_code=404, detail="Faulty entity not found")
@@ -400,6 +411,100 @@ def get_entity_maintenance_history(
     return records
 
 
+def mark_children_healthy(session: Session, fe: FaultyEntity, status: FaultyEntityStatus, user):
+
+    children = session.exec(
+        select(FaultyEntity).where(
+            FaultyEntity.case_id == fe.case_id,
+            FaultyEntity.parent_entity_id == fe.entity_id,
+            FaultyEntity.parent_entity_type == fe.entity_type,
+        )
+    ).all()
+    for child in children:
+        child.identified_by = user
+        if status is not None and status == FaultyEntityStatus.HEALTHY:
+            child.status = FaultyEntityStatus.HEALTHY
+        elif status == FaultyEntityStatus.CONFIRMED_FAULTY:
+            child.status = FaultyEntityStatus.UNDER_INSPECTION
+        elif status == FaultyEntityStatus.NO_FAULT_FOUND:
+            child.status = FaultyEntityStatus.NO_FAULT_FOUND
+        elif status == FaultyEntityStatus.RESOLVED:
+            child.status = FaultyEntityStatus.RESOLVED
+            child.resolved_at = datetime.now(timezone.utc)
+        mark_children_healthy(session, child)
+
+# @router.put(
+#     "/faulty-entities-Children/{fe}/",
+#     response_model=FaultyEntityRead,
+#     tags=["faulty-entities"],
+# )
+# def update_faulty_Children(
+#     fe:        int,
+#     payload:      FaultyEntityUpdate,
+#     session:      Session = Depends(get_session),
+#     current_user: User    = Depends(require_permission("edit_faulty_entities")),
+# ):
+#     """
+#     Update fault classification or status.
+#     When resolving, supply resolution_type; resolved_at is set automatically.
+
+#     REQUEST:  { "status": "resolved", "resolution_type": "repaired" }
+#     RESPONSE: Updated FaultyEntityRead
+#     """
+    
+#     print("payload ", payload)
+
+#     children = session.exec(
+#         select(FaultyEntity).where(
+#             FaultyEntity.case_id == payload.case_id,
+#             FaultyEntity.parent_entity_id == payload.entity_id,
+#             FaultyEntity.parent_entity_type == payload.entity_type,
+#             )
+#         ).all()
+#     for child in children:
+#         child.status = FaultyEntityStatus.HEALTHY
+
+#         if payload.status is not None and payload.status == FaultyEntityStatus.HEALTHY:
+#             entity_status = FaultyEntityStatus.HEALTHY
+#         elif payload.status == FaultyEntityStatus.CONFIRMED_FAULTY:
+#             entity_status = FaultyEntityStatus.SUSPECTED
+#         elif payload.status == FaultyEntityStatus.NO_FAULT_FOUND:
+#             entity_status = FaultyEntityStatus.HEALTHY
+#         elif payload.status == FaultyEntityStatus.RESOLVED:
+#             entity_status = FaultyEntityStatus.RESOLVED
+#             payload.resolved_at = datetime.now(timezone.utc)
+
+#         update_faulty_Children(session, child)
+            
+#     session.commit()
+#     session.refresh(fe)
+#     return fe
+@router.put(
+    "/faulty-entities-Children/{fe_id}/",
+    response_model=FaultyEntityRead,
+)
+def update_faulty_Children(
+    fe_id: int,
+    payload: FaultyEntityUpdate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_permission("edit_faulty_entities")),
+):
+
+    fe = session.get(FaultyEntity, fe_id)
+
+    if not fe:
+        raise HTTPException(404, "Faulty entity not found")
+
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(fe, k, v)
+
+    if payload.status == FaultyEntityStatus.HEALTHY:
+        mark_children_healthy(session, fe, payload.status, payload.id, fe.identified_by)
+
+    session.commit()
+    session.refresh(fe)
+
+    return fe
 # =============================================================================
 # ENDPOINTS — MAINTENANCE ACTION
 # =============================================================================
@@ -852,6 +957,7 @@ def suspect_children(
         raise HTTPException(status_code=404, detail="Maintenance case not found")
 
     # Step 1 — Create the confirmed-faulty FE for the reported entity
+
     parent_fe = FaultyEntity(
         case_id=case_id,
         entity_type=payload.entity_type.value,
@@ -861,6 +967,8 @@ def suspect_children(
         status=FaultyEntityStatus.CONFIRMED_FAULTY,
         identified_by=current_user.id,
         parent_faulty_entity_id=None,
+        parent_entity_id=None,
+        parent_entity_type=None,
         entity_name=payload.entity_name,
         serial_number=payload.serial_number,
         part_number=payload.part_number,
@@ -895,7 +1003,7 @@ def suspect_children(
         parent_fe.id,
         current_user.id,
     )
-    print("@@@@@@@@@@@@@@@@@///////////Suspecting Child on Backend", suspects)
+    # print("@@@@@@@@@@@@@@@@@///////////Suspecting Child on Backend", suspects)
     session.commit()
     session.refresh(parent_fe)
     for s in suspects:

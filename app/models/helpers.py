@@ -100,16 +100,18 @@ def _collect_descendants(
 
     for child in children:
         child_id = child.id
-        info    = _get_label(session, child_type, child_id)
+        child_info = _get_label(session, child_type, child_id)
+        parent_info = _get_label(session, entity_type, entity_id)
         result.append(
             DescendantNode(
                 entity_type=child_type,
                 entity_id=child_id,
-                entity_name=info["entity_name"],
-                entity_PartNumber=info["part_number"],
-                entity_SerialNumber=info["serial_number"],
-                parent_ID = entity_id,
-                parent_name = info["entity_name"],
+                entity_name=child_info["entity_name"],
+                entity_PartNumber=child_info["part_number"],
+                entity_SerialNumber=child_info["serial_number"],
+                parent_ID=entity_id,
+                parent_type=entity_type,
+                parent_name=parent_info["entity_name"] if parent_info else None,
                 depth=depth + 1,
             )
         )
@@ -132,19 +134,24 @@ def _create_suspect_fes(
     Returns the created rows.
     """
     created: List[FaultyEntity] = []
+
     for desc in descendants:
         fe = FaultyEntity(
             case_id=case_id,
             entity_type=desc.entity_type,
             entity_id=desc.entity_id,
-            fault_type=fault_type,
-            fault_description=f"Suspected — under inspection (parent hierarchy flagged)",
-            status=FaultyEntityStatus.UNDER_INSPECTION,
-            parent_faulty_entity_id=parent_faulty_entity_id,
-            identified_by=identified_by,
+            entity_name= desc.entity_name,
             part_number = desc.entity_PartNumber,
             serial_number= desc.entity_SerialNumber,
-            entity_name= desc.entity_name
+            fault_type=fault_type,
+            status=FaultyEntityStatus.UNDER_INSPECTION,
+            fault_description=f"Suspected — under inspection (parent hierarchy flagged)",
+            identified_by=identified_by,
+            parent_faulty_entity_id=parent_faulty_entity_id,
+            parent_entity_id=desc.parent_ID, 
+            parent_entity_type=desc.parent_type,
+            depth = desc.depth,
+
         )
         session.add(fe)
         created.append(fe)
