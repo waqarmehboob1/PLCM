@@ -34,8 +34,30 @@ class ProjectBase(ProjectCommon):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CustomerCommon(SQLModel):
+    customer_code: str = Field(index=True, unique=True)
     name: str
-    contact_info: Optional[str] = None
+
+    organization_type: Optional[str] = None
+
+    primary_contact_name: Optional[str] = None
+    designation: Optional[str] = None
+
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
+
+    address: Optional[str] = None
+    country: Optional[str] = None
+
+    notes: Optional[str] = None
+
+    status: str = Field(default="active")
+
+    created_by: Optional[int] = None
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 
 class CustomerBase(CustomerCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
