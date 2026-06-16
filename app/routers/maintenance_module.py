@@ -411,7 +411,7 @@ def get_entity_maintenance_history(
     return records
 
 
-def mark_children_healthy(session: Session, fe: FaultyEntity, status: FaultyEntityStatus, user):
+def mark_children_healthy(session: Session, fe: FaultyEntity, status: FaultyEntityStatus):
 
     children = session.exec(
         select(FaultyEntity).where(
@@ -421,7 +421,7 @@ def mark_children_healthy(session: Session, fe: FaultyEntity, status: FaultyEnti
         )
     ).all()
     for child in children:
-        child.identified_by = user
+        child.identified_by = fe.identified_by
         if status is not None and status == FaultyEntityStatus.HEALTHY:
             child.status = FaultyEntityStatus.HEALTHY
         elif status == FaultyEntityStatus.CONFIRMED_FAULTY:
@@ -431,7 +431,7 @@ def mark_children_healthy(session: Session, fe: FaultyEntity, status: FaultyEnti
         elif status == FaultyEntityStatus.RESOLVED:
             child.status = FaultyEntityStatus.RESOLVED
             child.resolved_at = datetime.now(timezone.utc)
-        mark_children_healthy(session, child)
+        mark_children_healthy(session, child, child.status)
 
 # @router.put(
 #     "/faulty-entities-Children/{fe}/",
@@ -499,7 +499,7 @@ def update_faulty_Children(
         setattr(fe, k, v)
 
     if payload.status == FaultyEntityStatus.HEALTHY:
-        mark_children_healthy(session, fe, payload.status, payload.id, fe.identified_by)
+        mark_children_healthy(session, fe, payload.status)
 
     session.commit()
     session.refresh(fe)

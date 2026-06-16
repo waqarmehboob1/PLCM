@@ -322,7 +322,6 @@ class FaultyEntity(FaultyEntityBase, table=True):
             nullable=True,
         ),
     )
-
     depth: Optional[int] = Field(default=None)
     entity_type: EntityType = Field(
         sa_column=sa.Column(

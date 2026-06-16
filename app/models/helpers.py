@@ -368,6 +368,8 @@ def _generate_case_number(session: Session) -> str:
     latest_case = session.exec(select(MaintenanceCase).order_by(MaintenanceCase.id.desc())).first()
     if latest_case:
         next_id = latest_case.id + 1
+    else:
+        next_id = 1
 
     case_number = f"MC-{year}-{next_id:04d}"
 
