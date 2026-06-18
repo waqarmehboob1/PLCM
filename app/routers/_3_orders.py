@@ -9,6 +9,7 @@ from app.services.create_entitystatusHistory import create_status_history
 from app.services.update_entity import update_entity_status
 from app.config.entities import ENTITY_CONFIG
 from app.routers.auth import require_permission
+from app.models.helpers import _generate_Entity_Code
 
 entity_config = ENTITY_CONFIG.get("order")
 
@@ -18,6 +19,7 @@ router = APIRouter()
 @router.post("/orders/", response_model=schemas.OrderRead, tags=["orders"])
 def create_order(order: schemas.OrderCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_orders"))):
     db_order = Order(**order.model_dump())
+    db_order.order_number = _generate_Entity_Code(session, Order)
     session.add(db_order)
     session.flush()
 

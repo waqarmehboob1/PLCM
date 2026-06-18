@@ -1,7 +1,8 @@
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
+from decimal import Decimal
 
 # Base models for all entities, defining common fields and structure
 
@@ -34,7 +35,6 @@ class ProjectBase(ProjectCommon):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CustomerCommon(SQLModel):
-    customer_code: str = Field(index=True, unique=True)
     name: str
 
     organization_type: Optional[str] = None
@@ -58,7 +58,6 @@ class CustomerCommon(SQLModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-
 class CustomerBase(CustomerCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -81,8 +80,17 @@ class HierarchyBase(HierarchyCommon):
 
 class OrderCommon(SQLModel):
     customer_id: int
-    order_number: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    contract_number: Optional[str] = None
+    po_number: Optional[str] = None
+    order_date: date
+    delivery_date: Optional[date] = None
+    total_value: Optional[Decimal] = None
+    currency: str = "PKR"
     status_id: Optional[int] = None
+    project_manager: Optional[str] = None
+    remarks: Optional[str] = None
 
 class OrderBase(OrderCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

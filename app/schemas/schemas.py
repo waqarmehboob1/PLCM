@@ -69,11 +69,15 @@ class CustomerCreate(CustomerBase):
 
 class CustomerRead(CustomerBase):
     id: int
+    customer_code: Optional[str] = None 
+    name: str 
+    status: Optional[str] = None 
+    updated_at: Optional[datetime] = None
     orders: Optional[List["OrderRead"]] = None
     class Config:
         orm_mode = True
 
-class CustomerUpdate(SQLModel):
+class CustomerUpdate(CustomerBase):
     name: Optional[str] = None
     contact_info: Optional[str] = None
 

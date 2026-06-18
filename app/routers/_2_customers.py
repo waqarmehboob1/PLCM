@@ -2,9 +2,11 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from app.database import get_session
-from app.models.tables import (Customer, User)
 from app.schemas import schemas
 from app.routers.auth import require_permission
+from app.models.helpers import _generate_Entity_Code
+from app.models.tables import FaultyEntity, MaintenanceCase, Component, Unit, Module, Subsystem, System, Project, Order, Customer, User
+
 
 router = APIRouter()
 
@@ -12,6 +14,7 @@ router = APIRouter()
 @router.post("/customers/", response_model=schemas.CustomerRead, tags=["customers"])
 def create_customer(customer: schemas.CustomerCreate, session: Session = Depends(get_session), current_user: User = Depends(require_permission("create_customers"))):
     db_customer = Customer(**customer.model_dump())
+    db_customer.customer_code = _generate_Entity_Code(session, Customer)
     session.add(db_customer)
     session.commit()
     session.refresh(db_customer)

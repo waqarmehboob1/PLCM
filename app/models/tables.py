@@ -35,6 +35,7 @@ class Permission(PermissionBase, table=True):
 
 class Customer(CustomerBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    customer_code: Optional[str] = Field(index=True, unique=True)
     orders: List["Order"] = Relationship(back_populates="customer")
 
 class Status(StatusBase, table=True):
@@ -56,6 +57,7 @@ class Hierarchy(HierarchyBase, table=True):
 
 class Order(OrderBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    order_number: Optional[str] = Field(index=True, unique=True)
     customer_id: int = Field(foreign_key="customer.id")
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     customer: Optional[Customer] = Relationship(back_populates="orders")

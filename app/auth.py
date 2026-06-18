@@ -119,6 +119,7 @@ DEFAULT_PERMISSIONS = [
     {"name": "create_customers", "description": "Create customers"},
     {"name": "edit_customers", "description": "Edit customers"},
     {"name": "delete_customers", "description": "Delete customers"},
+    {"name": "customers", "description": "list all customers"},
     
     # ==================== ORDERS MANAGEMENT ====================
     {"name": "view_orders", "description": "View orders"},
