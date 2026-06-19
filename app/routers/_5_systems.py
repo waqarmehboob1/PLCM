@@ -75,7 +75,7 @@ def update_system(system_id: int, system: schemas.SystemUpdate, session: Session
 
 # Update Entity status and Create Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    update_entity_status(session=session, entity= db_system, entity_name = entity_config["display_name"])
+    update_entity_status(session=session, entity= db_system, entity_name = entity_config["display_name"], changed_by_user= current_user.id)
 
     session.commit()
     session.refresh(db_system)

@@ -57,7 +57,7 @@ def update_inventory(inventory_id: int, inventory: schemas.InventoryUpdate, sess
 
 # Update Entity status and Create Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    update_entity_status(session=session, entity= db_inventory, entity_name = entity_config["display_name"])
+    update_entity_status(session=session, entity= db_inventory, entity_name = entity_config["display_name"], changed_by_user= current_user.id)
 
     session.commit()
     session.refresh(db_inventory)

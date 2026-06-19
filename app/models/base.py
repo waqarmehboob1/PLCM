@@ -80,14 +80,14 @@ class HierarchyBase(HierarchyCommon):
 
 class OrderCommon(SQLModel):
     customer_id: int
-    title: str
+    title: Optional[str] = None
     description: Optional[str] = None
     contract_number: Optional[str] = None
     po_number: Optional[str] = None
-    order_date: date
+    order_date: Optional[date] = None
     delivery_date: Optional[date] = None
     total_value: Optional[Decimal] = None
-    currency: str = "PKR"
+    currency: Optional[str] = "PKR"
     status_id: Optional[int] = None
     project_manager: Optional[str] = None
     remarks: Optional[str] = None

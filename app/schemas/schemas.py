@@ -73,7 +73,7 @@ class CustomerRead(CustomerBase):
     name: str 
     status: Optional[str] = None 
     updated_at: Optional[datetime] = None
-    orders: Optional[List["OrderRead"]] = None
+    orders: Optional[List[OrderRead]] = None
     class Config:
         orm_mode = True
 
@@ -118,6 +118,8 @@ class OrderRead(OrderBase):
     customer_id: int
     status_name: Optional[str] = None
     projects: Optional[List["ProjectRead"]] = None
+    order_number: Optional[str] = None
+
 
     class Config:
         orm_mode = True

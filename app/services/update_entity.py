@@ -10,7 +10,7 @@ from app.schemas import schemas
 
 
 
-def update_entity_status(session: Session, entity:any, entity_name: Optional[str]):
+def update_entity_status(session: Session, entity:any, entity_name: Optional[str], changed_by_user: int):
 
     updated_entity = session.exec(
         select(Entity).where(
@@ -32,7 +32,7 @@ def update_entity_status(session: Session, entity:any, entity_name: Optional[str
         history_data=schemas.EntityStatusHistoryCreate(
             entity_id=updated_entity.id,
             status_id=updated_entity.status_id,
-            changed_by=5
+            changed_by=changed_by_user
         )
     )
     return updated_entity

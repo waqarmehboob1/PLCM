@@ -74,7 +74,7 @@ def update_order(order_id: int, order: schemas.OrderUpdate, session: Session = D
 
 # Update Entity status and Create Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    update_entity_status(session=session, entity= db_order, entity_name = entity_config["display_name"])
+    update_entity_status(session=session, entity= db_order, entity_name = entity_config["display_name"],changed_by_user= current_user.id)
 # --------------------------------------------------------------------------------------------------------------------------------------------
     session.commit()
     session.refresh(db_order)
