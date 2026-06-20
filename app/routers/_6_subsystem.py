@@ -31,7 +31,7 @@ def create_subsystem(subsystem: schemas.SubsystemCreate, session: Session = Depe
 
     session.commit()
     session.refresh(db_subsystem)
-    status_name = db_subsystem.status.name if db_subsystem.status else None
+    status_name = db_subsystem.status.status_name if db_subsystem.status else None
     return schemas.SubsystemRead(
         **db_subsystem.model_dump(),
         status_name=status_name,
@@ -43,7 +43,7 @@ def list_subsystems(skip: int = 0, limit: int = 100, session: Session = Depends(
     subsystems = session.exec(select(Subsystem).offset(skip).limit(limit)).all()
     result = []
     for subsystem in subsystems:
-        status_name = subsystem.status.name if subsystem.status else None
+        status_name = subsystem.status.status_name if subsystem.status else None
         result.append(schemas.SubsystemRead(
             **subsystem.model_dump(),
             status_name=status_name,
@@ -56,7 +56,7 @@ def get_subsystem(subsystem_id: int, session: Session = Depends(get_session), cu
     subsystem = session.get(Subsystem, subsystem_id)
     if not subsystem:
         raise HTTPException(status_code=404, detail="Subsystem not found")
-    status_name = subsystem.status.name if subsystem.status else None
+    status_name = subsystem.status.status_name if subsystem.status else None
     return schemas.SubsystemRead(
         **subsystem.model_dump(),
         status_name=status_name,
@@ -79,7 +79,7 @@ def update_subsystem(subsystem_id: int, subsystem: schemas.SubsystemUpdate, sess
 
     session.commit()
     session.refresh(db_subsystem)
-    status_name = db_subsystem.status.name if db_subsystem.status else None
+    status_name = db_subsystem.status.status_name if db_subsystem.status else None
     return schemas.SubsystemRead(
         **db_subsystem.model_dump(),
         status_name=status_name,

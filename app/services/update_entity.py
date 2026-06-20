@@ -21,7 +21,7 @@ def update_entity_status(session: Session, entity:any, entity_name: Optional[str
     if not entity:
         raise HTTPException(status_code=404, detail = "Entity Record not found")
         return None
-
+    print("updated_entity",updated_entity)
     updated_entity.status_id = entity.status_id
 
     session.add(updated_entity)

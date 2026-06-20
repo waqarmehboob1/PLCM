@@ -31,7 +31,7 @@ def create_component(component: schemas.ComponentCreate, session: Session = Depe
 
     session.commit()
     session.refresh(db_component)
-    status_name = db_component.status.name if db_component.status else None
+    status_name = db_component.status.status_name if db_component.status else None
     return schemas.ComponentRead(
         **db_component.model_dump(),
         status_name=status_name,
@@ -43,7 +43,7 @@ def list_components(skip: int = 0, limit: int = 100, session: Session = Depends(
     components = session.exec(select(Component).offset(skip).limit(limit)).all()
     result = []
     for component in components:
-        status_name = component.status.name if component.status else None
+        status_name = component.status.status_name if component.status else None
         result.append(schemas.ComponentRead(
             **component.model_dump(),
             status_name=status_name,
@@ -56,7 +56,7 @@ def get_component(component_id: int, session: Session = Depends(get_session), cu
     component = session.get(Component, component_id)
     if not component:
         raise HTTPException(status_code=404, detail="Component not found")
-    status_name = component.status.name if component.status else None
+    status_name = component.status.status_name if component.status else None
     return schemas.ComponentRead(
         **component.model_dump(),
         status_name=status_name,
@@ -79,7 +79,7 @@ def update_component(component_id: int, component: schemas.ComponentUpdate, sess
 
     session.commit()
     session.refresh(db_component)
-    status_name = db_component.status.name if db_component.status else None
+    status_name = db_component.status.status_name if db_component.status else None
     return schemas.ComponentRead(
         **db_component.model_dump(),
         status_name=status_name,

@@ -1,4 +1,7 @@
 ENTITY_CONFIG = {
+    "customer": {
+        "display_name": "Customer"
+    },
     "order": {
         "display_name": "Order"
     },

@@ -51,8 +51,6 @@ class CustomerCommon(SQLModel):
 
     notes: Optional[str] = None
 
-    status: str = Field(default="active")
-
     created_by: Optional[int] = None
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -62,7 +60,7 @@ class CustomerBase(CustomerCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class StatusCommon(SQLModel):
-    name: str
+    status_name: str
     description: Optional[str] = None
     status_type: Optional[str] = None
     
@@ -80,16 +78,22 @@ class HierarchyBase(HierarchyCommon):
 
 class OrderCommon(SQLModel):
     customer_id: int
-    title: Optional[str] = None
+
+    order_number: str = Field(index=True, unique=True)
+    title: str
     description: Optional[str] = None
     contract_number: Optional[str] = None
     po_number: Optional[str] = None
-    order_date: Optional[date] = None
+    order_date: date
     delivery_date: Optional[date] = None
+
     total_value: Optional[Decimal] = None
-    currency: Optional[str] = "PKR"
+    currency: str = "PKR"
+
     status_id: Optional[int] = None
+
     project_manager: Optional[str] = None
+
     remarks: Optional[str] = None
 
 class OrderBase(OrderCommon):
@@ -183,9 +187,6 @@ class InventoryBase(InventoryCommon):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))   
 
 
-
-
-
 class EntityType(str, Enum):
     PROJECT   = "project"
     SYSTEM    = "system"
@@ -273,6 +274,7 @@ class MaintenanceCaseCommon(SQLModel):
     entity_id: Optional[int] = None
     entity_type: Optional[str] = None
     part_number: Optional[str] = None
+    status_id: Optional[int]= None
     resolved_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] =Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -298,6 +300,7 @@ class FaultyEntityCommon(SQLModel):
     entity_id:         int
     fault_type:        FaultType          = FaultType.UNCLASSIFIED
     fault_description: Optional[str]      = None
+    status_id: Optional[int]= None
     status:            FaultyEntityStatus = FaultyEntityStatus.IDENTIFIED
     resolution_type:   Optional[ResolutionType] = None
 
@@ -352,6 +355,7 @@ class MaintenanceActionBase(MaintenanceActionCommon):
 class MaintenanceDeliveryCommon(SQLModel):
     delivery_type: DeliveryType   = DeliveryType.RE_DELIVERY
     status:        DeliveryStatus = DeliveryStatus.PENDING
+    status_id: Optional[int]= None
     received_by:   Optional[str]  = Field(
         default=None,
         description="Customer contact name or signature reference."

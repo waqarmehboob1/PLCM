@@ -33,15 +33,15 @@ class Permission(PermissionBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     roles: List["Role"] = Relationship(back_populates="permissions", link_model=RolePermission)
 
-class Customer(CustomerBase, table=True):
+class Hierarchy(HierarchyBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    customer_code: Optional[str] = Field(index=True, unique=True)
-    orders: List["Order"] = Relationship(back_populates="customer")
+    parent_id: Optional[int] = Field(default=None, foreign_key="hierarchy.id")
 
 class Status(StatusBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     # reverse relationships
     orders: List["Order"] = Relationship(back_populates="status")
+    customers: List["Customer"] = Relationship(back_populates="status")
     projects: List["Project"] = Relationship(back_populates="status")
     systems: List["System"] = Relationship(back_populates="status")
     subsystems: List["Subsystem"] = Relationship(back_populates="status")
@@ -50,76 +50,122 @@ class Status(StatusBase, table=True):
     components: List["Component"] = Relationship(back_populates="status")
     entities: List["Entity"] = Relationship(back_populates="status")
     history_records: List["EntityStatusHistory"] = Relationship(back_populates="status")
+    maintenance_cases: List["MaintenanceCase"]= Relationship(back_populates="m_status")
+    maintenance_deliveries: List["MaintenanceDelivery"]= Relationship(back_populates="m_status")
+    faulty_entities: List["FaultyEntity"]= Relationship(back_populates="m_status")
 
-class Hierarchy(HierarchyBase, table=True):
+class Customer(CustomerBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    parent_id: Optional[int] = Field(default=None, foreign_key="hierarchy.id")
+    customer_code: Optional[str] = Field(index=True, unique=True)
+    status_id: Optional[int] = Field(default=None, foreign_key="status.id")
+    orders: List["Order"] = Relationship(back_populates="customer", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
+    status: Optional[Status] = Relationship(back_populates="customers")
 
 class Order(OrderBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     order_number: Optional[str] = Field(index=True, unique=True)
-    customer_id: int = Field(foreign_key="customer.id")
+    customer_id: int = Field(foreign_key="customer.id", ondelete="CASCADE")
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     customer: Optional[Customer] = Relationship(back_populates="orders")
     status: Optional[Status] = Relationship(back_populates="orders")
-    projects: List["Project"] = Relationship(back_populates="order")
+    projects: List["Project"] = Relationship(back_populates="order", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            }, )
 
 class Project(ProjectBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    order_id: Optional[int] = Field(default=None, foreign_key="order.id")
+    order_id: Optional[int] = Field(default=None, foreign_key="order.id", ondelete="CASCADE")
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
     owner: Optional["User"] = Relationship(back_populates="projects")
     order: Optional["Order"] = Relationship(back_populates="projects")
     status: Optional[Status] = Relationship(back_populates="projects")
-    systems: List["System"] = Relationship(back_populates="project")
-    maintenance_cases: List["MaintenanceCase"] = Relationship(back_populates="project")
+    systems: List["System"] = Relationship(back_populates="project",
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
+    maintenance_cases: List["MaintenanceCase"] = Relationship(back_populates="project", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
 
 class System(SystemBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    project_id: int = Field(foreign_key="project.id")
+    project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     project: Optional[Project] = Relationship(back_populates="systems")
     status: Optional[Status] = Relationship(back_populates="systems")
-    subsystems: List["Subsystem"] = Relationship(back_populates="system")
+    subsystems: List["Subsystem"] = Relationship(back_populates="system", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
 
 class Subsystem(SubsystemBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    system_id: int = Field(foreign_key="system.id")
-    status_id: Optional[int] = Field(default=None, foreign_key="status.id")
+    system_id: int = Field(foreign_key="system.id", ondelete="CASCADE")
+    status_id: Optional[int] = Field(default=None, foreign_key="status.id", ondelete="CASCADE")
     system: Optional[System] = Relationship(back_populates="subsystems")
     status: Optional[Status] = Relationship(back_populates="subsystems")
-    modules: List["Module"] = Relationship(back_populates="subsystem")
+    modules: List["Module"] = Relationship(back_populates="subsystem", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
 
 class Module(ModuleBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    subsystem_id: int = Field(foreign_key="subsystem.id")
+    subsystem_id: int = Field(foreign_key="subsystem.id", ondelete="CASCADE")
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     subsystem: Optional[Subsystem] = Relationship(back_populates="modules")
     status: Optional[Status] = Relationship(back_populates="modules")
-    units: List["Unit"] = Relationship(back_populates="module")
+    units: List["Unit"] = Relationship(back_populates="module", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
 
 class Unit(UnitBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    module_id: int = Field(foreign_key="module.id")
+    module_id: int = Field(foreign_key="module.id", ondelete="CASCADE")
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     module: Optional[Module] = Relationship(back_populates="units")
     status: Optional[Status] = Relationship(back_populates="units")
-    components: List["Component"] = Relationship(back_populates="unit")
+    components: List["Component"] = Relationship(back_populates="unit", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
 
 class Component(ComponentBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    unit_id: int = Field(foreign_key="unit.id")
+    unit_id: int = Field(foreign_key="unit.id", ondelete="CASCADE")
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     unit: Optional[Unit] = Relationship(back_populates="components")
     status: Optional[Status] = Relationship(back_populates="components")
-    inventory_items: List["Inventory"] = Relationship(back_populates="component")
+    inventory_items: List["Inventory"] = Relationship(back_populates="component", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
 
 class Entity(EntityBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     status: Optional["Status"] = Relationship(back_populates="entities")
-    status_history: List["EntityStatusHistory"] = Relationship(back_populates="entity")
+    status_history: List["EntityStatusHistory"] = Relationship(back_populates="entity", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
     maintenance_logs: List["MaintenanceLog"] = Relationship(back_populates="entity")
 
 class MaintenanceLog(MaintenanceLogBase, table=True):
@@ -152,12 +198,9 @@ class MaintenanceCase(MaintenanceCaseBase, table=True):
 
     id:            Optional[int] = Field(default=None, primary_key=True)
     case_number:   str           = Field(unique=False, index=True, max_length=50, description="Auto-generated. Format: MC-YYYY-NNNN")
-    project_id:    int           = Field(foreign_key="project.id")
+    project_id:    int           = Field(foreign_key="project.id", ondelete="CASCADE")
     reported_by:   Optional[int] = Field(default=None, foreign_key="user.id")
-    status:        CaseStatus    = Field(
-        sa_column=sa.Column(
-            sa.Enum(
-                CaseStatus,
+    status:        CaseStatus    = Field(sa_column=sa.Column(sa.Enum(CaseStatus,
                 values_callable=lambda entries: [entry.value for entry in entries],
                 name="casestatus",
                 native_enum=True,
@@ -167,12 +210,22 @@ class MaintenanceCase(MaintenanceCaseBase, table=True):
         ),
         default=CaseStatus.OPEN,
     )
+    status_id: Optional[int]   = Field(default=None, foreign_key="status.id")
+    m_status: Optional[Status]   = Relationship(back_populates="maintenance_cases")
 
     # Relationships
     project:          Optional[Project]           = Relationship(back_populates="maintenance_cases")
     reported_by_user: Optional[User]              = Relationship(back_populates="reported_cases")
-    faulty_entities:  List["FaultyEntity"]        = Relationship(back_populates="case")
-    deliveries:       List["MaintenanceDelivery"] = Relationship(back_populates="case")
+    faulty_entities:  List["FaultyEntity"]        = Relationship(back_populates="case", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
+    deliveries:       List["MaintenanceDelivery"] = Relationship(back_populates="case", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
     
 class MaintenanceAction(MaintenanceActionBase, table=True):
     """
@@ -182,7 +235,7 @@ class MaintenanceAction(MaintenanceActionBase, table=True):
     __tablename__ = "maintenance_action"
 
     id:               Optional[int] = Field(default=None, primary_key=True)
-    faulty_entity_id: int           = Field(foreign_key="faulty_entity.id", index=True)
+    faulty_entity_id: int           = Field(foreign_key="faulty_entity.id", index=True,  ondelete="CASCADE")
     performed_by:     Optional[int] = Field(default=None, foreign_key="user.id")
     action_type:      ActionType    = Field(
         sa_column=sa.Column(
@@ -232,7 +285,7 @@ class MaintenanceDelivery(MaintenanceDeliveryBase, table=True):
     __tablename__ = "maintenance_delivery"
 
     id:           Optional[int] = Field(default=None, primary_key=True)
-    case_id:      int           = Field(foreign_key="maintenance_case.id", index=True)
+    case_id:      int           = Field(foreign_key="maintenance_case.id", index=True, ondelete="CASCADE")
     delivered_by: Optional[int] = Field(default=None, foreign_key="user.id")
     delivery_type: DeliveryType = Field(
         sa_column=sa.Column(
@@ -263,6 +316,8 @@ class MaintenanceDelivery(MaintenanceDeliveryBase, table=True):
     created_at:   datetime      = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
+    status_id: Optional[int] = Field(default=None, foreign_key="status.id")
+    m_status: Optional[Status] = Relationship(back_populates="maintenance_deliveries")
 
     # Relationships
     case:              Optional[MaintenanceCase] = Relationship(back_populates="deliveries")
@@ -291,7 +346,9 @@ class FaultyEntity(FaultyEntityBase, table=True):
             nullable=False,
         ),
     )
-    case_id:int                            = Field(foreign_key="maintenance_case.id", index=True)
+    status_id: Optional[int]               = Field(default=None, foreign_key="status.id")
+    m_status: Optional[Status]             = Relationship(back_populates="faulty_entities")
+    case_id:int                            = Field(foreign_key="maintenance_case.id", index=True, ondelete="CASCADE")
     identified_by:Optional[int]            = Field(default=None, foreign_key="user.id")
     parent_faulty_entity_id: Optional[int] = Field(
         default=None,
@@ -351,7 +408,11 @@ class FaultyEntity(FaultyEntityBase, table=True):
     # Relationships
     case:             Optional[MaintenanceCase]  = Relationship(back_populates="faulty_entities")
     identified_by_user: Optional[User]           = Relationship(back_populates="identified_faults")
-    actions:          List["MaintenanceAction"]  = Relationship(back_populates="faulty_entity")
+    actions:          List["MaintenanceAction"]  = Relationship(back_populates="faulty_entity", 
+                                         sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
 
     # Self-referential: parent / children
     # remote_side points to the PK column (the "one" side of one-to-many).
@@ -368,13 +429,6 @@ class FaultyEntity(FaultyEntityBase, table=True):
             "remote_side":  "[FaultyEntity.id]",
         }
     )
-
-
-# ===== AUTHENTICATION & AUTHORIZATION TABLES =====
-
-
-
-
 
 
 

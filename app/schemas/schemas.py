@@ -65,21 +65,25 @@ class UserWithRoles(UserBase):
 
 # ---- Customer ----
 class CustomerCreate(CustomerBase):
+    status_id: Optional[int] = None 
     pass
 
 class CustomerRead(CustomerBase):
     id: int
-    customer_code: Optional[str] = None 
+    customer_code: Optional[str] = None
+    status_id: Optional[int] = None 
     name: str 
-    status: Optional[str] = None 
+    status_name: Optional[str] = None 
     updated_at: Optional[datetime] = None
     orders: Optional[List[OrderRead]] = None
     class Config:
         orm_mode = True
 
-class CustomerUpdate(CustomerBase):
+class CustomerUpdate(SQLModel):
     name: Optional[str] = None
     contact_info: Optional[str] = None
+    status_id: Optional[int] = None 
+    status_name: Optional[str] = None 
 
 # ---- Status ----
 class StatusCreate(StatusBase):
@@ -91,7 +95,7 @@ class StatusRead(StatusBase):
         orm_mode = True
 
 class StatusUpdate(SQLModel):
-    name: Optional[str] = None
+    status_name: Optional[str] = None
     description: Optional[str] = None
 
 class HierarchyCreate(HierarchyBase):

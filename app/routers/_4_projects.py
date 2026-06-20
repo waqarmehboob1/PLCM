@@ -30,7 +30,7 @@ def create_project(project: schemas.ProjectCreate, session: Session = Depends(ge
 
     session.commit()
     session.refresh(db_project)
-    status_name = db_project.status.name if db_project.status else None
+    status_name = db_project.status.status_name if db_project.status else None
     return schemas.ProjectRead(
         **db_project.model_dump(),
         status_name=status_name,
@@ -42,7 +42,7 @@ def list_projects(skip: int = 0, limit: int = 100, session: Session = Depends(ge
     projects = session.exec(select(Project).offset(skip).limit(limit)).all()
     result = []
     for project in projects:
-        status_name = project.status.name if project.status else None
+        status_name = project.status.status_name if project.status else None
         result.append(schemas.ProjectRead(
             **project.model_dump(),
             status_name=status_name,
@@ -55,7 +55,7 @@ def get_project(project_id: int, session: Session = Depends(get_session), curren
     project = session.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    status_name = project.status.name if project.status else None
+    status_name = project.status.status_name if project.status else None
     return schemas.ProjectRead(
         **project.model_dump(),
         status_name=status_name,
@@ -74,10 +74,10 @@ def update_project(project_id: int, project: schemas.ProjectUpdate, session: Ses
 
 # Update Entity status and Create Entity Status History
 # --------------------------------------------------------------------------------------------------------------------------------------------
-    update_entity_status(session=session, entity= db_project, entity_name = entity_config["display_name"], changed_by_user= current_user.id)
+    update_entity_status(session=session, entity= db_project, entity_name = entity_config["display_name"],changed_by_user= current_user.id)
     session.commit()
     session.refresh(db_project)
-    status_name = db_project.status.name if db_project.status else None
+    status_name = db_project.status.status_name if db_project.status else None
     return schemas.ProjectRead(
         **db_project.model_dump(),
         status_name=status_name,

@@ -31,7 +31,7 @@ def create_module(module: schemas.ModuleCreate, session: Session = Depends(get_s
 # --------------------------------------------------------------------------------------------------------------------------------------------
     session.commit()
     session.refresh(db_module)
-    status_name = db_module.status.name if db_module.status else None
+    status_name = db_module.status.status_name if db_module.status else None
     return schemas.ModuleRead(
         **db_module.model_dump(),
         status_name=status_name,
@@ -43,7 +43,7 @@ def list_modules(skip: int = 0, limit: int = 100, session: Session = Depends(get
     modules = session.exec(select(Module).offset(skip).limit(limit)).all()
     result = []
     for module in modules:
-        status_name = module.status.name if module.status else None
+        status_name = module.status.status_name if module.status else None
         result.append(schemas.ModuleRead(
             **module.model_dump(),
             status_name=status_name,
@@ -56,7 +56,7 @@ def get_module(module_id: int, session: Session = Depends(get_session), current_
     module = session.get(Module, module_id)
     if not module:
         raise HTTPException(status_code=404, detail="Module not found")
-    status_name = module.status.name if module.status else None
+    status_name = module.status.status_name if module.status else None
     return schemas.ModuleRead(
         **module.model_dump(),
         status_name=status_name,
@@ -79,7 +79,7 @@ def update_module(module_id: int, module: schemas.ModuleUpdate, session: Session
 
     session.commit()
     session.refresh(db_module)
-    status_name = db_module.status.name if db_module.status else None
+    status_name = db_module.status.status_name if db_module.status else None
     return schemas.ModuleRead(
         **db_module.model_dump(),
         status_name=status_name,

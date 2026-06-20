@@ -31,7 +31,7 @@ def create_system(system: schemas.SystemCreate, session: Session = Depends(get_s
 
     session.commit()
     session.refresh(db_system)
-    status_name = db_system.status.name if db_system.status else None
+    status_name = db_system.status.status_name if db_system.status else None
     return schemas.SystemRead(
         **db_system.model_dump(),
         status_name=status_name,
@@ -43,7 +43,7 @@ def list_systems(skip: int = 0, limit: int = 100, session: Session = Depends(get
     systems = session.exec(select(System).offset(skip).limit(limit)).all()
     result = []
     for system in systems:
-        status_name = system.status.name if system.status else None
+        status_name = system.status.status_name if system.status else None
         result.append(schemas.SystemRead(
             **system.model_dump(),
             status_name=status_name,
@@ -56,7 +56,7 @@ def get_system(system_id: int, session: Session = Depends(get_session), current_
     system = session.get(System, system_id)
     if not system:
         raise HTTPException(status_code=404, detail="System not found")
-    status_name = system.status.name if system.status else None
+    status_name = system.status.status_name if system.status else None
     return schemas.SystemRead(
         **system.model_dump(),
         status_name=status_name,
@@ -79,7 +79,7 @@ def update_system(system_id: int, system: schemas.SystemUpdate, session: Session
 
     session.commit()
     session.refresh(db_system)
-    status_name = db_system.status.name if db_system.status else None
+    status_name = db_system.status.status_name if db_system.status else None
     return schemas.SystemRead(
         **db_system.model_dump(),
         status_name=status_name,

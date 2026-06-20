@@ -6,6 +6,10 @@ from app.schemas import schemas
 from app.routers.auth import require_permission
 from app.models.helpers import _generate_Entity_Code
 from app.models.tables import FaultyEntity, MaintenanceCase, Component, Unit, Module, Subsystem, System, Project, Order, Customer, User
+from app.services.create_entity import New_entity
+from app.config.entities import ENTITY_CONFIG
+from app.services.update_entity import update_entity_status
+entity_config = ENTITY_CONFIG.get("customer")
 
 
 router = APIRouter()
@@ -16,14 +20,36 @@ def create_customer(customer: schemas.CustomerCreate, session: Session = Depends
     db_customer = Customer(**customer.model_dump())
     db_customer.customer_code = _generate_Entity_Code(session, Customer)
     session.add(db_customer)
+
+    session.flush()
+
+    # 1. Create Entity status    2. maintain Status History
+    # --------------------------------------------------------------------------------------------------------------------------------------------
+    New_entity(session=session, entity=db_customer, entity_name = entity_config["display_name"], changed_by_user= current_user.id)
+    # --------------------------------------------------------------------------------------------------------------------------------------------
+
     session.commit()
     session.refresh(db_customer)
-    return db_customer
+    status_name = db_customer.status.status_name if db_customer.status else None
+    return schemas.CustomerRead(
+        **db_customer.model_dump(),
+        status_name=status_name,
+        orders=db_customer.orders
+    )
+    # return db_customer
 
 @router.get("/customers/", response_model=List[schemas.CustomerRead], tags=["customers"])
 def list_customers(skip: int = 0, limit: int = 100, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_customers"))):
-    # return {"msg": "working"}
-    return session.exec(select(Customer).offset(skip).limit(limit)).all()
+    customers= session.exec(select(Customer).offset(skip).limit(limit)).all()
+    result = []
+    for customer in customers:
+        status_name = customer.status.status_name if customer.status_id else None
+        result.append(schemas.CustomerRead(
+            **customer.model_dump(),
+            status_name=status_name,
+            orders=customer.orders
+        ))
+    return result
 
 @router.get("/customers/{customer_id}/", response_model=schemas.CustomerRead, tags=["customers"])
 def get_customer(customer_id: int, session: Session = Depends(get_session), current_user: User = Depends(require_permission("view_customers"))):
@@ -40,8 +66,25 @@ def update_customer(customer_id: int, customer: schemas.CustomerUpdate, session:
     for k, v in customer.model_dump(exclude_unset=True).items():
         setattr(db_customer, k, v)
     session.add(db_customer)
+    session.flush()
+
+ # 1. Create Entity status    2. maintain Status History
+    # --------------------------------------------------------------------------------------------------------------------------------------------
+    update_entity_status(session=session, entity=db_customer, entity_name = entity_config["display_name"], changed_by_user= current_user.id)
+
+    # --------------------------------------------------------------------------------------------------------------------------------------------
     session.commit()
     session.refresh(db_customer)
+    status_name = db_customer.status.status_name if db_customer.status_id else None
+    return schemas.CustomerRead(
+            **db_customer.model_dump(),
+            status_name=status_name,
+            orders=db_customer.orders
+        )
+
+
+    
+
     return db_customer
 
 @router.delete("/customers/{customer_id}/", tags=["customers"])
