@@ -200,6 +200,7 @@ DEFAULT_PERMISSIONS = [
     
     # ==================== REPORTS & ANALYTICS ====================
     {"name": "view_reports", "description": "View reports"},
+    {"name": "view_executive_dashboard", "description": "View executive dashboard analytics"},
     {"name": "export_reports", "description": "Export reports"},
     
     # ==================== ROLE MANAGEMENT ====================
@@ -273,6 +274,7 @@ DEFAULT_ROLES = [
             "view_maintenance", "create_maintenance", "edit_maintenance",
             # Reports
             "view_reports",
+            "view_executive_dashboard",
             # Entities
             "view_entities", "create_entities", "edit_entities",
             # Status
@@ -335,6 +337,7 @@ DEFAULT_ROLES = [
             "view_statuses", "view_status_history",
             # Reports
             "view_reports",
+            "view_executive_dashboard",
 
             # Maintenance Cases
             "view_maintenance_cases",
@@ -387,6 +390,7 @@ DEFAULT_ROLES = [
             "view_statuses", "view_status_history",
             # Reports
             "view_reports",
+            "view_executive_dashboard",
 
             # Maintenance Cases
             "view_maintenance_cases",
@@ -455,6 +459,7 @@ DEFAULT_ROLES = [
             "view_hierarchy",
             # Reports
             "view_reports",
+            "view_executive_dashboard",
 
             # Maintenance Cases
             "view_maintenance_cases",
