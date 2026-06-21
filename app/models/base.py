@@ -212,7 +212,10 @@ class FaultType(str, Enum):
     WEAR                 = "wear"
     MANUFACTURING_DEFECT = "manufacturing_defect"
     UNCLASSIFIED         = "unclassified"
-    SUSPECTED            = "suspected"
+    ELECTRICAL           = 'electrical'
+    MECHANICAL           = 'mechanical'
+    ENVIRONMENTAL        = 'environmental'
+    OTHER                = 'other'
 
 
 class FaultyEntityStatus(str, Enum):
@@ -223,7 +226,7 @@ class FaultyEntityStatus(str, Enum):
     HEALTHY          = "healthy"
     RESOLVED         = "resolved"
     NO_FAULT_FOUND   = "no_fault_found"
-    FALSEPOSITIVE = 'false_positive'
+    FALSEPOSITIVE    = 'false_positive'
 
 
 class ResolutionType(str, Enum):
@@ -231,7 +234,7 @@ class ResolutionType(str, Enum):
     REPLACED       = "replaced"
     NO_FAULT_FOUND = "no_fault_found"
     DECOMMISSIONED = "decommissioned"
-    CLEAR = "clear"
+    CLEAR          = "clear"
 
 class ActionType(str, Enum):
     INSPECTION    = "inspection"
@@ -336,10 +339,14 @@ class MaintenanceActionCommon(SQLModel):
     # Populated only when action_type == ActionType.REPLACEMENT
     replacement_entity_id:   Optional[int]      = None
     replacement_entity_type: Optional[EntityType] = None
+    created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+
 
 class MaintenanceActionBase(MaintenanceActionCommon):
-    performed_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    performed_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc)
     )
 
 # =============================================================================
@@ -364,6 +371,65 @@ class MaintenanceDeliveryCommon(SQLModel):
 
 class MaintenanceDeliveryBase(MaintenanceDeliveryCommon):
     delivered_at: Optional[datetime] = None
+
+
+class ConfigurationHistoryBase(SQLModel):
+
+    entity_id: int = Field(foreign_key="entity.id", ondelete="CASCADE")
+
+    maintenance_case_id: Optional[int] = Field(default=None,foreign_key="maintenance_case.id", ondelete="CASCADE"    )
+
+    performed_by: int = Field(
+        foreign_key="user.id"
+    )
+
+    approved_by: Optional[int] = Field(
+        default=None,
+        foreign_key="user.id"
+    )
+
+    verified_by: Optional[int] = Field(
+        default=None,
+        foreign_key="user.id"
+    )
+
+    change_date: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+    installation_date: Optional[datetime] = None
+
+    removal_date: Optional[datetime] = None
+
+    fault_type: Optional[FaultType] = None
+
+    resolution_type: ResolutionType
+
+    old_part_number: Optional[str] = None
+    new_part_number: Optional[str] = None
+
+    old_serial_number: Optional[str] = None
+    new_serial_number: Optional[str] = None
+
+    old_revision: Optional[str] = None
+    new_revision: Optional[str] = None
+
+    old_batch_number: Optional[str] = None
+    new_batch_number: Optional[str] = None
+
+    operating_hours: Optional[float] = None
+
+    operating_cycles: Optional[int] = None
+
+    work_order_number: Optional[str] = None
+
+    reason: Optional[str] = None
+
+    corrective_action: Optional[str] = None
+
+    remarks: Optional[str] = None
+
+
 
 # ===== AUTHENTICATION & AUTHORIZATION MODELS =====
 class PermissionCommon(SQLModel):

@@ -79,9 +79,9 @@ def list_entity_maintenance_logs(entity_id: int, session: Session = Depends(get_
 @router.get("/part-numbers/", response_model=list[str])
 def get_part_numbers(session: Session = Depends(get_session)):
     part_numbers = set()
-    print("Compiler reached here")
+    # print("Compiler reached here")
     entity_models = list(EntityType)
-    print("Compiler reached 2",entity_models)
+    # print("Compiler reached 2",entity_models)
     
     for entity_type, (_, model, _) in _PARENT_MAP.items():
 

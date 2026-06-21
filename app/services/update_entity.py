@@ -27,12 +27,13 @@ def update_entity_status(session: Session, entity:any, entity_name: Optional[str
     session.add(updated_entity)
     session.flush()
 
-    create_status_history(
-        session=session,
-        history_data=schemas.EntityStatusHistoryCreate(
-            entity_id=updated_entity.id,
-            status_id=updated_entity.status_id,
-            changed_by=changed_by_user
+    if entity.status_id is not None:
+        create_status_history(
+            session=session,
+            history_data=schemas.EntityStatusHistoryCreate(
+                entity_id=updated_entity.id,
+                status_id=updated_entity.status_id,
+                changed_by=changed_by_user
+            )
         )
-    )
     return updated_entity

@@ -124,17 +124,17 @@ def get_maintenance_case(
         }
     """
     case = session.get(MaintenanceCase, case_id)
-    project_name: str = session.get(Project, case.project_id)
-    user_name: str = session.get(User, case.reported_by)
+    if not case:
+        raise HTTPException(status_code=404, detail="Maintenance case not found")
+
+    project = session.get(Project, case.project_id)
+    user = session.get(User, case.reported_by) if case.reported_by is not None else None
     print("-------------------------Get Maintainance Case by ID", case)
 
     case_read = MaintenanceCaseRead.model_validate(case)
+    case_read.project_name = project.name if project else "Undefined"
+    case_read.reported_by_user = user.username if user else None
 
-    case_read.project_name = project_name.name
-    case_read.reported_by_user = user_name.username
-
-    if not case_read:
-        raise HTTPException(status_code=404, detail="Maintenance case not found")
     return case_read
 
 @router.put(
@@ -314,6 +314,29 @@ def list_faulty_entities(
     return session.exec(query.offset(skip).limit(limit)).all()
 
 @router.get(
+    "/faulty-entities/",
+    response_model=List[FaultyEntityRead],
+    tags=["faulty-entities"],
+)
+def list_faulty_entities(
+    skip:         int = 0,
+    limit:        int = 100,
+    session:      Session = Depends(get_session),
+    current_user: User    = Depends(require_permission("view_faulty_entities")),
+):
+    """
+    List all faulty entities for a case. Filter by status or entity_type.
+
+    RESPONSE 200: [ { faulty_entity 1 }, { faulty_entity 2 }, ... ]
+    """
+    query = select(FaultyEntity)
+    # if status:
+    #     query = query.where(FaultyEntity.status == status)
+    # if entity_type:
+        # query = query.where(FaultyEntity.entity_type == entity_type)
+    return session.exec(query.offset(skip).limit(limit)).all()
+
+@router.get(
     "/faulty-entities/{fe_id}/",
     response_model=FaultyEntityRead,
     tags=["faulty-entities"],
@@ -351,10 +374,20 @@ def update_faulty_entity(
     fe = session.get(FaultyEntity, fe_id)
     if not fe:
         raise HTTPException(status_code=404, detail="Faulty entity not found")
+
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(fe, k, v)
-    if payload.status == FaultyEntityStatus.RESOLVED and not fe.resolved_at:
-        fe.resolved_at = datetime.now(timezone.utc)
+
+    if payload.status == FaultyEntityStatus.RESOLVED:
+        resolved_fault_type = payload.fault_type if payload.fault_type is not None else fe.fault_type
+        if resolved_fault_type == FaultType.UNCLASSIFIED:
+            raise HTTPException(
+                status_code=400,
+                detail="Fault type must be selected before resolving a faulty entity."
+            )
+        if not fe.resolved_at:
+            fe.resolved_at = datetime.now(timezone.utc)
+
     session.add(fe)
     session.commit()
     session.refresh(fe)
@@ -433,52 +466,6 @@ def mark_children_healthy(session: Session, fe: FaultyEntity, status: FaultyEnti
             child.resolved_at = datetime.now(timezone.utc)
         mark_children_healthy(session, child, child.status)
 
-# @router.put(
-#     "/faulty-entities-Children/{fe}/",
-#     response_model=FaultyEntityRead,
-#     tags=["faulty-entities"],
-# )
-# def update_faulty_Children(
-#     fe:        int,
-#     payload:      FaultyEntityUpdate,
-#     session:      Session = Depends(get_session),
-#     current_user: User    = Depends(require_permission("edit_faulty_entities")),
-# ):
-#     """
-#     Update fault classification or status.
-#     When resolving, supply resolution_type; resolved_at is set automatically.
-
-#     REQUEST:  { "status": "resolved", "resolution_type": "repaired" }
-#     RESPONSE: Updated FaultyEntityRead
-#     """
-    
-#     print("payload ", payload)
-
-#     children = session.exec(
-#         select(FaultyEntity).where(
-#             FaultyEntity.case_id == payload.case_id,
-#             FaultyEntity.parent_entity_id == payload.entity_id,
-#             FaultyEntity.parent_entity_type == payload.entity_type,
-#             )
-#         ).all()
-#     for child in children:
-#         child.status = FaultyEntityStatus.HEALTHY
-
-#         if payload.status is not None and payload.status == FaultyEntityStatus.HEALTHY:
-#             entity_status = FaultyEntityStatus.HEALTHY
-#         elif payload.status == FaultyEntityStatus.CONFIRMED_FAULTY:
-#             entity_status = FaultyEntityStatus.SUSPECTED
-#         elif payload.status == FaultyEntityStatus.NO_FAULT_FOUND:
-#             entity_status = FaultyEntityStatus.HEALTHY
-#         elif payload.status == FaultyEntityStatus.RESOLVED:
-#             entity_status = FaultyEntityStatus.RESOLVED
-#             payload.resolved_at = datetime.now(timezone.utc)
-
-#         update_faulty_Children(session, child)
-            
-#     session.commit()
-#     session.refresh(fe)
-#     return fe
 @router.put(
     "/faulty-entities-Children/{fe_id}/",
     response_model=FaultyEntityRead,
@@ -510,13 +497,13 @@ def update_faulty_Children(
 # =============================================================================
 
 @router.post(
-    "/faulty-entities/{fe_id}/actions/",
+    "/maintenance-actions/",
     response_model=MaintenanceActionRead,
     status_code=201,
     tags=["maintenance-actions"],
 )
 def create_maintenance_action(
-    fe_id:        int,
+    # fe_id:        int,
     payload:      MaintenanceActionCreate,
     session:      Session = Depends(get_session),
     current_user: User    = Depends(require_permission("create_maintenance_actions")),
@@ -540,12 +527,13 @@ def create_maintenance_action(
           "performed_at": "2024-05-05T14:30:00Z"
         }
     """
+    fe_id = payload.faulty_entity_id
     fe = session.get(FaultyEntity, fe_id)
     if not fe:
         raise HTTPException(status_code=404, detail="Faulty entity not found")
     data = payload.model_dump()
     data["performed_by"] = data.get("performed_by") or current_user.id
-    action = MaintenanceAction(faulty_entity_id=fe_id, **data)
+    action = MaintenanceAction(**data)
     session.add(action)
 
     # When a replacement action passes, auto-resolve the faulty entity.
@@ -553,6 +541,11 @@ def create_maintenance_action(
         payload.action_type == ActionType.REPLACEMENT
         and payload.outcome == ActionOutcome.PASS
     ):
+        if fe.fault_type == FaultType.UNCLASSIFIED:
+            raise HTTPException(
+                status_code=400,
+                detail="Fault type must be selected before resolving a faulty entity."
+            )
         fe.status = FaultyEntityStatus.RESOLVED
         fe.resolution_type = ResolutionType.REPLACED
         fe.resolved_at = datetime.now(timezone.utc)
@@ -561,6 +554,24 @@ def create_maintenance_action(
     session.commit()
     session.refresh(action)
     return action
+
+@router.get(
+    "/maintenance-actions/",
+    response_model=List[MaintenanceActionRead],
+    tags=["maintenance-actions"],
+)
+def list_all_maintenance_actions(
+    skip:         int = 0,
+    limit:        int = 100,
+    session:      Session = Depends(get_session),
+    current_user: User    = Depends(require_permission("view_maintenance_actions")),
+):
+    """List all maintenance actions across faulty entities."""
+    return session.exec(
+        select(MaintenanceAction)
+        .order_by(MaintenanceAction.performed_at.desc())
+        .offset(skip).limit(limit)
+    ).all()
 
 @router.get(
     "/faulty-entities/{fe_id}/actions/",
@@ -680,6 +691,24 @@ def create_maintenance_delivery(
     session.commit()
     session.refresh(delivery)
     return delivery
+
+@router.get(
+    "/maintenance-deliveries/",
+    response_model=List[MaintenanceDeliveryRead],
+    tags=["maintenance-deliveries"],
+)
+def list_all_maintenance_deliveries(
+    skip:         int = 0,
+    limit:        int = 100,
+    session:      Session = Depends(get_session),
+    current_user: User    = Depends(require_permission("view_maintenance_deliveries")),
+):
+    """List all maintenance deliveries across cases."""
+    return session.exec(
+        select(MaintenanceDelivery)
+        .order_by(MaintenanceDelivery.created_at.desc())
+        .offset(skip).limit(limit)
+    ).all()
 
 @router.get(
     "/maintenance-cases/{case_id}/deliveries/",
@@ -1128,4 +1157,3 @@ def confirm_fault(
             f"{cleared} healthy suspect{'s' if cleared != 1 else ''} cleared."
         ),
     )
-

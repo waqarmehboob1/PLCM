@@ -16,16 +16,17 @@ def New_entity(session, entity:any, entity_name:str, changed_by_user: int) -> En
         )
 
 
-    entity = Entity(**entity_data.model_dump())
-    session.add(entity)
+    db_entity = Entity(**entity_data.model_dump())
+    session.add(db_entity)
     session.flush()
 
-    create_status_history(
-        session=session,
-        history_data=schemas.EntityStatusHistoryCreate(
-            entity_id=entity.id,
-            status_id=entity.status_id,
-            changed_by=changed_by_user
+    if entity.status_id is not None:
+        create_status_history(
+            session=session,
+            history_data=schemas.EntityStatusHistoryCreate(
+                entity_id=db_entity.id,
+                status_id=entity.status_id,
+                changed_by=changed_by_user
+            )
         )
-    )
-    return entity
+    return db_entity

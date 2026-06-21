@@ -237,6 +237,12 @@ DEFAULT_PERMISSIONS = [
     {"name": "edit_maintenance_deliveries", "description": "Edit maintenance deliveries"},
     {"name": "delete_maintenance_deliveries", "description": "Delete maintenance deliveries"},
     {"name": "confirm_maintenance_deliveries", "description": "Confirm maintenance deliveries"},
+
+    # ==================== MAINTENANCE DELIVERIES ====================
+    {"name": "view_configuration_history", "description": "View configuration history"},
+    {"name": "create_configuration_history", "description": "Create_configuration history"},
+    {"name": "edit_configuration_history", "description": "Edit configuration history"},
+    {"name": "delete_configuration_history", "description": "Delete configuration history"},
 ]
 
 DEFAULT_ROLES = [

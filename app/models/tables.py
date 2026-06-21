@@ -4,6 +4,7 @@ from sqlmodel import Column, Field, Relationship
 import sqlalchemy as sa
 from enum import Enum
 from sqlalchemy import Enum as SQLEnum
+from app.models.base import ConfigurationHistoryBase
 
 class UserRole(SQLModel, table=True):
     user_id: Optional[int] = Field(default=None, foreign_key="user.id", primary_key=True)
@@ -102,6 +103,7 @@ class System(SystemBase, table=True):
     project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     project: Optional[Project] = Relationship(back_populates="systems")
+    
     status: Optional[Status] = Relationship(back_populates="systems")
     subsystems: List["Subsystem"] = Relationship(back_populates="system", 
                                          sa_relationship_kwargs={
@@ -161,6 +163,10 @@ class Entity(EntityBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     status_id: Optional[int] = Field(default=None, foreign_key="status.id")
     status: Optional["Status"] = Relationship(back_populates="entities")
+    configuration_history: list["ConfigurationHistory"] = Relationship(back_populates="entity",sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },)
     status_history: List["EntityStatusHistory"] = Relationship(back_populates="entity", 
                                          sa_relationship_kwargs={
                                             "cascade": "all, delete-orphan",
@@ -200,6 +206,12 @@ class MaintenanceCase(MaintenanceCaseBase, table=True):
     case_number:   str           = Field(unique=False, index=True, max_length=50, description="Auto-generated. Format: MC-YYYY-NNNN")
     project_id:    int           = Field(foreign_key="project.id", ondelete="CASCADE")
     reported_by:   Optional[int] = Field(default=None, foreign_key="user.id")
+    configuration_history: List["ConfigurationHistory"] = Relationship(
+    back_populates="maintenance_case",sa_relationship_kwargs={
+                                            "cascade": "all, delete-orphan",
+                                            "passive_deletes": True,
+                                            },
+)
     status:        CaseStatus    = Field(sa_column=sa.Column(sa.Enum(CaseStatus,
                 values_callable=lambda entries: [entry.value for entry in entries],
                 name="casestatus",
@@ -272,7 +284,7 @@ class MaintenanceAction(MaintenanceActionBase, table=True):
         ),
         default=None,
     )
-
+    
     # Relationships
     faulty_entity:    Optional[FaultyEntity] = Relationship(back_populates="actions")
     performed_by_user: Optional[User]        = Relationship(back_populates="maintenance_actions")
@@ -430,5 +442,20 @@ class FaultyEntity(FaultyEntityBase, table=True):
         }
     )
 
+# Table created to maintain history of items replaced of a given project
+class ConfigurationHistory(ConfigurationHistoryBase,table=True):
 
+    __tablename__ = "configuration_history"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    entity: "Entity" = Relationship(back_populates="configuration_history")
+
+    maintenance_case: Optional["MaintenanceCase"] = Relationship(back_populates="configuration_history")
+
+    performed_by_user: Optional["User"] = Relationship(sa_relationship_kwargs=dict(foreign_keys="[ConfigurationHistory.performed_by]")    )
+
+    approved_by_user: Optional["User"] = Relationship(sa_relationship_kwargs=dict(foreign_keys="[ConfigurationHistory.approved_by]")    )
+
+    verified_by_user: Optional["User"] = Relationship(sa_relationship_kwargs=dict(foreign_keys="[ConfigurationHistory.verified_by]")    )
 
