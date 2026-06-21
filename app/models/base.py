@@ -29,6 +29,7 @@ class ProjectCommon(SQLModel):
     owner_id: int
     order_id: int = None
     status_id: Optional[int] = None
+    progress: int = Field(default=0, ge=0, le=100)
 
 class ProjectBase(ProjectCommon):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

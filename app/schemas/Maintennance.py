@@ -3,7 +3,7 @@ from pydantic import ConfigDict
 from app.models.base import (MaintenanceCaseBase, FaultyEntityBase, MaintenanceActionBase, MaintenanceDeliveryBase)
 from typing import List, Optional
 from app.models.base import EntityType, FaultType, CaseStatus, FaultyEntityStatus, ResolutionType, ActionOutcome, DeliveryStatus
-from .schemas import EntityRead, UserRead
+from .schemas import EntityRead, MaintenanceUserRead
 from datetime import datetime, datetime, timezone
 
 
@@ -132,7 +132,7 @@ class MaintenanceCaseRead(MaintenanceCaseBase):
     case_number:      str
     project_id:       int
     reported_by:      Optional[int]                 = None
-    reported_by_user: Optional[UserRead]            = None
+    reported_by_user: Optional[MaintenanceUserRead]            = None
     faulty_entities:  List["FaultyEntityRead"]       = []
     deliveries:       List["MaintenanceDeliveryRead"] = []
 
@@ -172,7 +172,7 @@ class FaultyEntityRead(FaultyEntityBase):
     id:                      int
     case_id:                 int
     identified_by:           Optional[int]                = None
-    identified_by_user:      Optional[UserRead]           = None
+    identified_by_user:      Optional[MaintenanceUserRead]           = None
     parent_faulty_entity_id: Optional[int]                = None
     actions:                 List["MaintenanceActionRead"] = []
 
@@ -228,7 +228,7 @@ class MaintenanceActionRead(MaintenanceActionBase):
     id:                      int
     faulty_entity_id:        int
     performed_by:            Optional[int]     = None
-    performed_by_user:       Optional[UserRead] = None
+    performed_by_user:       Optional[MaintenanceUserRead] = None
     replacement_entity_id:   Optional[int]     = None
     replacement_entity_type: Optional[EntityType] = None
 
@@ -263,7 +263,7 @@ class MaintenanceDeliveryRead(MaintenanceDeliveryBase):
     id:                int
     case_id:           int
     delivered_by:      Optional[int]     = None
-    delivered_by_user: Optional[UserRead] = None
+    delivered_by_user: Optional[MaintenanceUserRead] = None
     created_at:        datetime
 
     model_config = ConfigDict(from_attributes=True)

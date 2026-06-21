@@ -1,7 +1,7 @@
 from typing import Optional, List
 from datetime import datetime
 from sqlmodel import SQLModel
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 from app.models.base import (
     UserBase,
     CustomerBase,
@@ -59,6 +59,13 @@ class UserUpdate(SQLModel):
 class UserWithRoles(UserCommon):
     id: int
     roles: List[str]
+
+
+class MaintenanceUserRead(UserCommon):
+    """Nested user on maintenance endpoints — avoids loading projects/password."""
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 # ---- Customer ----
 class CustomerCreate(CustomerBase):
@@ -152,6 +159,7 @@ class ProjectUpdate(SQLModel):
     owner_id: Optional[int] = None
     order_id: Optional[int] = None
     status_id: Optional[int] = None
+    progress: Optional[int] = Field(default=None, ge=0, le=100)
 
 # ---- System / Subsystem / Module / Unit / Component ----
 class SystemCreate(SystemBase):

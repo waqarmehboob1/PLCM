@@ -33,6 +33,15 @@ from sqlmodel import Session, select
 router = APIRouter()
 
 
+def _build_case_read(session: Session, case: MaintenanceCase) -> MaintenanceCaseRead:
+    project = session.get(Project, case.project_id)
+    user = session.get(User, case.reported_by) if case.reported_by is not None else None
+    case_read = MaintenanceCaseRead.model_validate(case)
+    case_read.project_name = project.name if project else "Undefined"
+    case_read.reported_by_user = user.username if user else None
+    return case_read
+
+
 @router.post("/maintenance-cases/",
     response_model=MaintenanceCaseRead,
     status_code=201,
@@ -71,7 +80,7 @@ def create_maintenance_case(
     session.add(case)
     session.commit()
     session.refresh(case)
-    return case
+    return _build_case_read(session, case)
 
 @router.get(
     "/maintenance-cases/",
@@ -96,9 +105,10 @@ def list_maintenance_cases(
         query = query.where(MaintenanceCase.project_id == project_id)
     if status:
         query = query.where(MaintenanceCase.status == status)
-    return session.exec(
+    cases = session.exec(
         query.order_by(MaintenanceCase.reported_at.desc()).offset(skip).limit(limit)
     ).all()
+    return [_build_case_read(session, case) for case in cases]
 
 @router.get(
     "/maintenance-cases/{case_id}/",
@@ -127,15 +137,7 @@ def get_maintenance_case(
     if not case:
         raise HTTPException(status_code=404, detail="Maintenance case not found")
 
-    project = session.get(Project, case.project_id)
-    user = session.get(User, case.reported_by) if case.reported_by is not None else None
-    print("-------------------------Get Maintainance Case by ID", case)
-
-    case_read = MaintenanceCaseRead.model_validate(case)
-    case_read.project_name = project.name if project else "Undefined"
-    case_read.reported_by_user = user.username if user else None
-
-    return case_read
+    return _build_case_read(session, case)
 
 @router.put(
     "/maintenance-cases/{case_id}/",
@@ -165,7 +167,7 @@ def update_maintenance_case(
     session.add(case)
     session.commit()
     session.refresh(case)
-    return case
+    return _build_case_read(session, case)
 
 @router.delete(
     "/maintenance-cases/{case_id}/",
