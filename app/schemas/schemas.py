@@ -56,11 +56,8 @@ class UserUpdate(SQLModel):
     is_active: Optional[bool] = None
 
 
-class UserWithRoles(UserBase):
+class UserWithRoles(UserCommon):
     id: int
-    username: str
-    full_name: str
-    email: str | None = None
     roles: List[str]
 
 # ---- Customer ----
